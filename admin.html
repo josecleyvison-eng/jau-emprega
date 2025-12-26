@@ -126,6 +126,117 @@
         "
       >
         <h1>Painel Administrativo</h1>
+        <div
+          style="
+            background: #222;
+            border: 1px solid #444;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+          "
+        >
+          <h2 style="margin-top: 0">Gerenciar Banners (1080x1080)</h2>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap">
+            <div class="banner-slot">
+              <p>Banner 1</p>
+              <input
+                type="file"
+                id="file1"
+                accept="image/*"
+                onchange="converterEEnviar(this, 1)"
+              />
+              <img
+                id="preview1"
+                style="
+                  width: 100px;
+                  height: 100px;
+                  object-fit: cover;
+                  margin-top: 10px;
+                  background: #000;
+                  display: none;
+                "
+              />
+            </div>
+
+            <div class="banner-slot">
+              <p>Banner 2</p>
+              <input
+                type="file"
+                id="file2"
+                accept="image/*"
+                onchange="converterEEnviar(this, 2)"
+              />
+              <img
+                id="preview2"
+                style="
+                  width: 100px;
+                  height: 100px;
+                  object-fit: cover;
+                  margin-top: 10px;
+                  background: #000;
+                  display: none;
+                "
+              />
+            </div>
+
+            <div class="banner-slot">
+              <p>Banner 3</p>
+              <input
+                type="file"
+                id="file3"
+                accept="image/*"
+                onchange="converterEEnviar(this, 3)"
+              />
+              <img
+                id="preview3"
+                style="
+                  width: 100px;
+                  height: 100px;
+                  object-fit: cover;
+                  margin-top: 10px;
+                  background: #000;
+                  display: none;
+                "
+              />
+            </div>
+          </div>
+          <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px">
+            Selecione uma imagem para enviar automaticamente.
+          </p>
+        </div>
+
+        <script>
+          // Função que transforma a imagem em texto e envia pro servidor
+          function converterEEnviar(input, posicao) {
+            const arquivo = input.files[0];
+            if (!arquivo) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(arquivo); // Transforma em Base64
+
+            reader.onload = async function () {
+              const base64 = reader.result;
+
+              // Mostra prévia
+              const imgPreview = document.getElementById(`preview${posicao}`);
+              imgPreview.src = base64;
+              imgPreview.style.display = "block";
+
+              // Envia pro servidor
+              try {
+                const res = await fetch(`${API_URL}/admin/banners`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ imagem: base64, posicao: posicao }),
+                });
+                if (res.ok) alert(`Banner ${posicao} atualizado!`);
+                else alert("Erro ao salvar banner (imagem muito grande?)");
+              } catch (erro) {
+                console.error(erro);
+              }
+            };
+          }
+        </script>
         <button onclick="sair()" style="background: #555">Sair</button>
       </div>
 

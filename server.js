@@ -102,7 +102,51 @@ app.put("/admin/vagas/:id", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+// --- SISTEMA DE BANNERS ---
 
+// ROTA PÚBLICA: Pega os banners para mostrar no site
+app.get("/banners", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM banners ORDER BY posicao ASC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// ROTA ADMIN: Salva ou Atualiza um banner (Recebe imagem em Base64)
+// Aumentamos o limite de tamanho para aceitar fotos (50mb)
+app.use(express.json({ limit: "50mb" }));
+
+app.post("/admin/banners", async (req, res) => {
+  const { imagem, posicao } = req.body;
+
+  try {
+    // Verifica se já existe banner nessa posição
+    const check = await pool.query("SELECT * FROM banners WHERE posicao = $1", [
+      posicao,
+    ]);
+
+    if (check.rows.length > 0) {
+      // Se já tem, ATUALIZA
+      await pool.query("UPDATE banners SET imagem = $1 WHERE posicao = $2", [
+        imagem,
+        posicao,
+      ]);
+    } else {
+      // Se não tem, CRIA
+      await pool.query(
+        "INSERT INTO banners (imagem, posicao) VALUES ($1, $2)",
+        [imagem, posicao]
+      );
+    }
+    res.json({ mensagem: "Banner salvo com sucesso!" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Jaú Emprega (Versão PostgreSQL) rodando na porta ${PORT}`);

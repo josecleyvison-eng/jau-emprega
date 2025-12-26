@@ -204,7 +204,36 @@
           Enviar para Aprovação
         </button>
       </div>
+<style>
+            .banner-container {
+                width: 100%;
+                max-width: 500px;
+                aspect-ratio: 1 / 1;
+                margin: 20px auto;
+                border-radius: 10px;
+                overflow: hidden;
+                position: relative;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                display: none; 
+            }
+            .banner-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: none; 
+            }
+            .banner-ativo {
+                display: block; 
+                animation: fade 1s;
+            }
+            @keyframes fade {
+                from { opacity: 0.4 } 
+                to { opacity: 1 }
+            }
+        </style>
 
+        <div id="area-banners" class="banner-container">
+            </div>
       <h2 style="margin-bottom: 15px">Vagas Recentes</h2>
 
       <div class="busca-container">
@@ -328,7 +357,59 @@
           alert("Erro de conexão.");
         }
       }
+// ... (código da função enviarVaga acima) ...
 
+        // ⬇️⬇️⬇️ COLE O JAVASCRIPT DO BANNER AQUI ⬇️⬇️⬇️
+
+        // --- LÓGICA DO CARROSSEL ---
+        let bannerIndex = 0;
+
+        async function carregarBanners() {
+            try {
+                const res = await fetch(`${API_URL}/banners`);
+                const banners = await res.json();
+                
+                const area = document.getElementById('area-banners');
+                
+                if (banners.length > 0) {
+                    area.style.display = 'block'; 
+                    area.innerHTML = ''; 
+
+                    banners.forEach((b, index) => {
+                        const img = document.createElement('img');
+                        img.src = b.imagem;
+                        img.className = 'banner-img';
+                        if (index === 0) img.classList.add('banner-ativo'); 
+                        area.appendChild(img);
+                    });
+
+                    if (banners.length > 1) {
+                        setInterval(rodarCarrossel, 5000); 
+                    }
+                }
+            } catch (erro) {
+                console.error("Erro nos banners:", erro);
+            }
+        }
+
+        function rodarCarrossel() {
+            const imagens = document.getElementsByClassName('banner-img');
+            if(imagens.length === 0) return;
+
+            imagens[bannerIndex].classList.remove('banner-ativo');
+            
+            bannerIndex++;
+            if (bannerIndex >= imagens.length) bannerIndex = 0; 
+
+            imagens[bannerIndex].classList.add('banner-ativo');
+        }
+
+        // ⬇️ NÃO ESQUEÇA DE CHAMAR A FUNÇÃO AQUI:
+        carregarBanners(); 
+        carregarVagas();
+    </script>
+</body>
+</html>
       carregarVagas();
     </script>
   </body>
