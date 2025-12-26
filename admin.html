@@ -91,7 +91,7 @@
         cursor: pointer;
       }
 
-      /* --- ÁREA DE BANNERS (O Makeover!) --- */
+      /* --- ÁREA DE BANNERS --- */
       .banner-section {
         background: #252525;
         padding: 25px;
@@ -110,7 +110,7 @@
         background: #2d2d2d;
         border: 2px dashed #555;
         border-radius: 12px;
-        aspect-ratio: 1 / 1; /* Quadrado Perfeito */
+        aspect-ratio: 1 / 1;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -125,7 +125,6 @@
         background: #333;
       }
 
-      /* O input feio fica invisível, mas clicável através do label */
       .input-file-hidden {
         display: none;
       }
@@ -140,7 +139,6 @@
         font-size: 0.9rem;
       }
 
-      /* A imagem de preview cobre o card */
       .preview-img {
         position: absolute;
         top: 0;
@@ -268,10 +266,17 @@
 
       <h2 style="margin-bottom: 20px">Vagas Pendentes</h2>
       <div id="lista-pendentes"></div>
+
+      <h2
+        style="margin-top: 40px; border-top: 1px solid #444; padding-top: 20px"
+      >
+        Vagas Ativas (No Ar)
+      </h2>
+      <p style="color: #aaa; font-size: 0.9rem">
+        Aqui estão as vagas que todo mundo está vendo. Cuidado ao excluir.
+      </p>
+      <div id="lista-aprovadas"></div>
     </div>
-<h2 style="margin-top: 40px; border-top: 1px solid #444; padding-top: 20px;">Vagas Ativas (No Ar)</h2>
-    <p style="color:#aaa; font-size:0.9rem">Aqui estão as vagas que todo mundo está vendo. Cuidado ao excluir.</p>
-    <div id="lista-aprovadas"></div>
 
     <script>
       const API_URL = "";
@@ -299,11 +304,12 @@
           alert("Erro de conexão");
         }
       }
+
       function sair() {
         location.reload();
       }
 
-      // --- BANNERS (Lógica mantida) ---
+      // --- BANNERS ---
       function converterEEnviar(input, posicao) {
         const arquivo = input.files[0];
         if (!arquivo) return;
@@ -314,12 +320,10 @@
         reader.onload = async function () {
           const base64 = reader.result;
 
-          // Atualiza a imagem no card
           const imgPreview = document.getElementById(`preview${posicao}`);
           imgPreview.src = base64;
           imgPreview.style.display = "block";
 
-          // Envia
           try {
             const res = await fetch(`${API_URL}/admin/banners`, {
               method: "POST",
@@ -327,7 +331,6 @@
               body: JSON.stringify({ imagem: base64, posicao: posicao }),
             });
             if (res.ok) {
-              // Feedback visual rápido (borda verde)
               input.parentElement.style.borderColor = "#28a745";
             }
           } catch (erro) {
@@ -336,38 +339,47 @@
         };
       }
 
-      // --- VAGAS ---
+      // --- VAGAS PENDENTES ---
       async function carregarPendentes() {
-        const res = await fetch(`${API_URL}/admin/pendentes`);
-        const vagas = await res.json();
-        const lista = document.getElementById("lista-pendentes");
-        lista.innerHTML = "";
-        if (vagas.length === 0) {
-          lista.innerHTML = '<p style="color:#777">Nada para aprovar hoje.</p>';
-          return;
-        }
+        try {
+          const res = await fetch(`${API_URL}/admin/pendentes`);
+          const vagas = await res.json();
+          const lista = document.getElementById("lista-pendentes");
+          lista.innerHTML = "";
+          if (vagas.length === 0) {
+            lista.innerHTML =
+              '<p style="color:#777">Nada para aprovar hoje.</p>';
+            return;
+          }
 
-        vagas.forEach((vaga) => {
-          const item = document.createElement("div");
-          item.className = "vaga-pendente";
-          item.innerHTML = `
-                    <div class="vaga-info">
-                        <h3>${vaga.titulo}</h3>
-                        <p>${vaga.empresa} | ${vaga.categoria || "Geral"}</p>
-                        <p>${vaga.salario}</p>
-                    </div>
-                    <div class="botoes">
-                        <button class="btn-acao btn-aprovar" onclick="atualizarStatus(${
-                          vaga.id
-                        }, 1)">Aprovar</button>
-                        <button class="btn-acao btn-reprovar" onclick="atualizarStatus(${
-                          vaga.id
-                        }, 2)">Reprovar</button>
-                    </div>
-                `;
-          lista.appendChild(item);
-        });
+          vagas.forEach((vaga) => {
+            const item = document.createElement("div");
+            item.className = "vaga-pendente";
+            item.innerHTML = `
+                        <div class="vaga-info">
+                            <h3>${vaga.titulo}</h3>
+                            <p>${vaga.empresa} | ${
+              vaga.categoria || "Geral"
+            }</p>
+                            <p>${vaga.salario}</p>
+                        </div>
+                        <div class="botoes">
+                            <button class="btn-acao btn-aprovar" onclick="atualizarStatus(${
+                              vaga.id
+                            }, 1)">Aprovar</button>
+                            <button class="btn-acao btn-reprovar" onclick="atualizarStatus(${
+                              vaga.id
+                            }, 2)">Reprovar</button>
+                        </div>
+                    `;
+            lista.appendChild(item);
+          });
+        } catch (e) {
+          console.error(e);
+        }
       }
+
+      // --- ATUALIZAR STATUS ---
       async function atualizarStatus(id, novoStatus) {
         await fetch(`${API_URL}/admin/vagas/${id}`, {
           method: "PUT",
@@ -375,92 +387,68 @@
           body: JSON.stringify({ status: novoStatus }),
         });
         carregarPendentes();
+        carregarAprovadas();
       }
-      // ... (código anterior que já existia, como o atualizarStatus) ...
-        
-        async function atualizarStatus(id, novoStatus) {
-            await fetch(`${API_URL}/admin/vagas/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: novoStatus })
-            });
-            carregarPendentes();
-        }
 
-        // ⬇️⬇️⬇️ COLE O CÓDIGO NOVO AQUI EMBAIXO ⬇️⬇️⬇️
+      // --- VAGAS APROVADAS (COM DATA!) ---
+      async function carregarAprovadas() {
+        try {
+          const res = await fetch(`${API_URL}/admin/aprovadas`);
+          const vagas = await res.json();
+          const lista = document.getElementById("lista-aprovadas");
+          lista.innerHTML = "";
 
-       // Substitua a função "carregarAprovadas" antiga por esta nova:
-
-async function carregarAprovadas() {
-    try {
-        const res = await fetch(`${API_URL}/admin/aprovadas`);
-        const vagas = await res.json();
-        const lista = document.getElementById("lista-aprovadas");
-        lista.innerHTML = "";
-
-        if (vagas.length === 0) {
+          if (vagas.length === 0) {
             lista.innerHTML = '<p style="color:#777">Nenhuma vaga ativa.</p>';
             return;
-        }
+          }
 
-        vagas.forEach((vaga) => {
-            // --- Lógica da Data ---
+          vagas.forEach((vaga) => {
+            // Lógica da data
             let dataTexto = "";
-            
             if (vaga.data_postagem) {
-                // O banco devolve algo tipo "2025-12-26T19:30:00.000Z"
-                const dataObj = new Date(vaga.data_postagem);
-                
-                // Converte para o horário local do usuário (Brasil)
-                const diaMes = dataObj.toLocaleDateString('pt-BR', { 
-                    day: '2-digit', 
-                    month: '2-digit' 
-                });
-                const hora = dataObj.toLocaleTimeString('pt-BR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-                
-                dataTexto = `<span style="font-size: 0.85rem; color: #888; font-weight: normal; margin-left: 8px;">
-                    📅 ${diaMes} às ${hora}
-                </span>`;
+              const dataObj = new Date(vaga.data_postagem);
+              const diaMes = dataObj.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              });
+              const hora = dataObj.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              dataTexto = `<span style="font-size: 0.85rem; color: #888; font-weight: normal; margin-left: 8px;">📅 ${diaMes} às ${hora}</span>`;
             }
-            // -----------------------
 
             const item = document.createElement("div");
             item.className = "vaga-pendente";
-            // Borda verde para indicar que está ativa
-            item.style.borderLeft = "5px solid #28a745"; 
+            item.style.borderLeft = "5px solid #28a745";
 
             item.innerHTML = `
-                <div class="vaga-info">
-                    <h3 style="display: flex; align-items: center; flex-wrap: wrap;">
-                        ${vaga.titulo} 
-                        ${dataTexto}
-                    </h3>
-                    <p>${vaga.empresa}</p>
-                </div>
-                <div class="botoes">
-                    <button class="btn-acao btn-reprovar" onclick="excluirVaga(${vaga.id})">🗑️ Excluir</button>
-                </div>
-            `;
+                    <div class="vaga-info">
+                        <h3 style="display: flex; align-items: center; flex-wrap: wrap;">
+                            ${vaga.titulo} 
+                            ${dataTexto}
+                        </h3>
+                        <p>${vaga.empresa}</p>
+                    </div>
+                    <div class="botoes">
+                        <button class="btn-acao btn-reprovar" onclick="excluirVaga(${vaga.id})">🗑️ Excluir</button>
+                    </div>
+                `;
             lista.appendChild(item);
-        });
-    } catch (error) {
-        console.error("Erro ao carregar aprovadas:", error);
-    }
-}
-
-        // Função de Excluir
-        async function excluirVaga(id) {
-            if(confirm("Tem certeza que quer apagar essa vaga para sempre?")) {
-                await fetch(`${API_URL}/admin/vagas/${id}`, { method: 'DELETE' });
-                carregarAprovadas(); 
-            }
+          });
+        } catch (error) {
+          console.error("Erro ao carregar aprovadas:", error);
         }
+      }
 
-    </script> </body>
-</html>
+      // --- EXCLUIR VAGA ---
+      async function excluirVaga(id) {
+        if (confirm("Tem certeza que quer apagar essa vaga para sempre?")) {
+          await fetch(`${API_URL}/admin/vagas/${id}`, { method: "DELETE" });
+          carregarAprovadas();
+        }
+      }
     </script>
   </body>
 </html>
