@@ -2,294 +2,344 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <title>Admin - Login</title>
+    <title>Admin - Jaú Emprega</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
     />
     <style>
+      /* --- ESTILOS GERAIS --- */
       body {
         font-family: "Poppins", sans-serif;
-        background: #222;
-        color: white;
+        background: #1a1a1a;
+        color: #eee;
+        margin: 0;
         padding: 20px;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
         min-height: 100vh;
-        margin: 0;
       }
 
       .container {
-        max-width: 800px;
+        max-width: 900px;
         width: 100%;
       }
 
-      /* Estilos da TELA DE LOGIN */
+      /* --- TELA DE LOGIN --- */
       #tela-login {
-        background: #333;
+        background: #2d2d2d;
         padding: 40px;
-        border-radius: 10px;
+        border-radius: 15px;
         text-align: center;
         max-width: 400px;
-        margin: 0 auto;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        margin: 10vh auto;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
       }
       input[type="password"] {
         width: 100%;
-        padding: 12px;
+        padding: 15px;
         margin: 15px 0;
         border: none;
-        border-radius: 5px;
-        font-size: 1rem;
+        border-radius: 8px;
+        background: #444;
+        color: white;
+        outline: none;
+        box-sizing: border-box;
       }
       .btn-entrar {
         width: 100%;
-        padding: 12px;
+        padding: 15px;
         background: #004aad;
         color: white;
         border: none;
-        border-radius: 5px;
-        font-size: 1rem;
-        cursor: pointer;
+        border-radius: 8px;
         font-weight: bold;
+        cursor: pointer;
+        transition: 0.3s;
       }
       .btn-entrar:hover {
         background: #003885;
+        transform: scale(1.02);
       }
 
-      /* Estilos do PAINEL (Inicialmente escondido) */
+      /* --- PAINEL PRINCIPAL --- */
       #painel-admin {
         display: none;
-      } /* O segredo está aqui! */
+        width: 100%;
+      }
 
-      h1 {
-        border-bottom: 1px solid #555;
-        padding-bottom: 10px;
-        margin-bottom: 20px;
-      }
-      .vaga-pendente {
-        background: #444;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #ffc107;
-      }
-      .botoes {
-        margin-top: 15px;
+      header {
         display: flex;
-        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #444;
+        padding-bottom: 20px;
       }
-      button {
+      h1 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .btn-sair {
+        background: #444;
+        color: white;
         border: none;
         padding: 8px 15px;
         border-radius: 5px;
         cursor: pointer;
+      }
+
+      /* --- ÁREA DE BANNERS (O Makeover!) --- */
+      .banner-section {
+        background: #252525;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 40px;
+        border: 1px solid #333;
+      }
+      .banner-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .upload-card {
+        background: #2d2d2d;
+        border: 2px dashed #555;
+        border-radius: 12px;
+        aspect-ratio: 1 / 1; /* Quadrado Perfeito */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      .upload-card:hover {
+        border-color: #004aad;
+        background: #333;
+      }
+
+      /* O input feio fica invisível, mas clicável através do label */
+      .input-file-hidden {
+        display: none;
+      }
+
+      .icon-camera {
+        font-size: 2rem;
+        color: #666;
+        margin-bottom: 10px;
+      }
+      .text-label {
+        color: #888;
+        font-size: 0.9rem;
+      }
+
+      /* A imagem de preview cobre o card */
+      .preview-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+
+      /* --- LISTA DE VAGAS --- */
+      .vaga-pendente {
+        background: #2d2d2d;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #ffc107;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+      .vaga-info h3 {
+        margin: 0 0 5px 0;
+      }
+      .vaga-info p {
+        margin: 0;
+        color: #aaa;
+        font-size: 0.9rem;
+      }
+
+      .btn-acao {
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
         font-weight: bold;
+        cursor: pointer;
         color: white;
+        transition: 0.2s;
       }
       .btn-aprovar {
         background: #28a745;
       }
+      .btn-aprovar:hover {
+        background: #218838;
+      }
       .btn-reprovar {
         background: #dc3545;
       }
-      .info {
-        font-size: 0.9rem;
-        color: #ccc;
-        margin-bottom: 5px;
+      .btn-reprovar:hover {
+        background: #c82333;
       }
 
-      /* Mensagem de Erro */
       #erro-msg {
         color: #ff6b6b;
-        margin-top: 10px;
         display: none;
+        margin-top: 10px;
       }
     </style>
   </head>
   <body>
     <div id="tela-login">
       <h2>🔒 Área Restrita</h2>
-      <p>Digite a senha de administrador</p>
-      <input type="password" id="campo-senha" placeholder="Senha" />
-      <button class="btn-entrar" onclick="fazerLogin()">Entrar</button>
+      <p style="color: #aaa">Painel do Administrador</p>
+      <input type="password" id="campo-senha" placeholder="Digite a senha" />
+      <button class="btn-entrar" onclick="fazerLogin()">Acessar Painel</button>
       <p id="erro-msg">Senha incorreta!</p>
     </div>
 
     <div id="painel-admin" class="container">
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        "
-      >
-        <h1>Painel Administrativo</h1>
-        <div
-          style="
-            background: #222;
-            border: 1px solid #444;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-          "
+      <header>
+        <h1>Painel de Controle</h1>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </header>
+
+      <div class="banner-section">
+        <h2
+          style="margin: 0; border-bottom: 1px solid #444; padding-bottom: 10px"
         >
-          <h2 style="margin-top: 0">Gerenciar Banners (1080x1080)</h2>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap">
-            <div class="banner-slot">
-              <p>Banner 1</p>
-              <input
-                type="file"
-                id="file1"
-                accept="image/*"
-                onchange="converterEEnviar(this, 1)"
-              />
-              <img
-                id="preview1"
-                style="
-                  width: 100px;
-                  height: 100px;
-                  object-fit: cover;
-                  margin-top: 10px;
-                  background: #000;
-                  display: none;
-                "
-              />
-            </div>
+          📢 Banners Publicitários (1080x1080)
+        </h2>
+        <p style="color: #777; font-size: 0.9rem; margin-top: 5px">
+          Clique nos quadrados para subir uma imagem nova. Atualiza na hora.
+        </p>
 
-            <div class="banner-slot">
-              <p>Banner 2</p>
-              <input
-                type="file"
-                id="file2"
-                accept="image/*"
-                onchange="converterEEnviar(this, 2)"
-              />
-              <img
-                id="preview2"
-                style="
-                  width: 100px;
-                  height: 100px;
-                  object-fit: cover;
-                  margin-top: 10px;
-                  background: #000;
-                  display: none;
-                "
-              />
-            </div>
+        <div class="banner-grid">
+          <label class="upload-card">
+            <input
+              type="file"
+              class="input-file-hidden"
+              accept="image/*"
+              onchange="converterEEnviar(this, 1)"
+            />
+            <span class="icon-camera">📷</span>
+            <span class="text-label">Banner 1</span>
+            <img id="preview1" class="preview-img" />
+          </label>
 
-            <div class="banner-slot">
-              <p>Banner 3</p>
-              <input
-                type="file"
-                id="file3"
-                accept="image/*"
-                onchange="converterEEnviar(this, 3)"
-              />
-              <img
-                id="preview3"
-                style="
-                  width: 100px;
-                  height: 100px;
-                  object-fit: cover;
-                  margin-top: 10px;
-                  background: #000;
-                  display: none;
-                "
-              />
-            </div>
-          </div>
-          <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px">
-            Selecione uma imagem para enviar automaticamente.
-          </p>
+          <label class="upload-card">
+            <input
+              type="file"
+              class="input-file-hidden"
+              accept="image/*"
+              onchange="converterEEnviar(this, 2)"
+            />
+            <span class="icon-camera">📷</span>
+            <span class="text-label">Banner 2</span>
+            <img id="preview2" class="preview-img" />
+          </label>
+
+          <label class="upload-card">
+            <input
+              type="file"
+              class="input-file-hidden"
+              accept="image/*"
+              onchange="converterEEnviar(this, 3)"
+            />
+            <span class="icon-camera">📷</span>
+            <span class="text-label">Banner 3</span>
+            <img id="preview3" class="preview-img" />
+          </label>
         </div>
-
-        <script>
-          // Função que transforma a imagem em texto e envia pro servidor
-          function converterEEnviar(input, posicao) {
-            const arquivo = input.files[0];
-            if (!arquivo) return;
-
-            const reader = new FileReader();
-            reader.readAsDataURL(arquivo); // Transforma em Base64
-
-            reader.onload = async function () {
-              const base64 = reader.result;
-
-              // Mostra prévia
-              const imgPreview = document.getElementById(`preview${posicao}`);
-              imgPreview.src = base64;
-              imgPreview.style.display = "block";
-
-              // Envia pro servidor
-              try {
-                const res = await fetch(`${API_URL}/admin/banners`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ imagem: base64, posicao: posicao }),
-                });
-                if (res.ok) alert(`Banner ${posicao} atualizado!`);
-                else alert("Erro ao salvar banner (imagem muito grande?)");
-              } catch (erro) {
-                console.error(erro);
-              }
-            };
-          }
-        </script>
-        <button onclick="sair()" style="background: #555">Sair</button>
       </div>
 
-      <p>Vagas aguardando sua aprovação:</p>
+      <h2 style="margin-bottom: 20px">Vagas Pendentes</h2>
       <div id="lista-pendentes"></div>
     </div>
 
     <script>
       const API_URL = "";
 
-      // Lógica de Login
+      // --- LOGIN ---
       async function fazerLogin() {
         const senha = document.getElementById("campo-senha").value;
         const erroMsg = document.getElementById("erro-msg");
-
         try {
-          // Pergunta pro servidor se a senha está certa
           const res = await fetch(`${API_URL}/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ senha }),
           });
-
           const dados = await res.json();
-
           if (dados.sucesso) {
-            // SEGREDO: Esconde o login e mostra o painel
             document.getElementById("tela-login").style.display = "none";
             document.getElementById("painel-admin").style.display = "block";
-            document.body.style.alignItems = "flex-start"; // Ajuste visual
-
-            carregarPendentes(); // Busca as vagas
+            carregarPendentes();
           } else {
             erroMsg.style.display = "block";
           }
         } catch (error) {
-          alert("Erro ao conectar no servidor.");
+          alert("Erro de conexão");
         }
       }
-
       function sair() {
-        location.reload(); // Recarrega a página para bloquear de novo
+        location.reload();
       }
 
-      // --- Funções do Admin (Iguais ao anterior) ---
+      // --- BANNERS (Lógica mantida) ---
+      function converterEEnviar(input, posicao) {
+        const arquivo = input.files[0];
+        if (!arquivo) return;
+
+        const reader = new FileReader();
+        reader.readAsDataURL(arquivo);
+
+        reader.onload = async function () {
+          const base64 = reader.result;
+
+          // Atualiza a imagem no card
+          const imgPreview = document.getElementById(`preview${posicao}`);
+          imgPreview.src = base64;
+          imgPreview.style.display = "block";
+
+          // Envia
+          try {
+            const res = await fetch(`${API_URL}/admin/banners`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ imagem: base64, posicao: posicao }),
+            });
+            if (res.ok) {
+              // Feedback visual rápido (borda verde)
+              input.parentElement.style.borderColor = "#28a745";
+            }
+          } catch (erro) {
+            console.error(erro);
+          }
+        };
+      }
+
+      // --- VAGAS ---
       async function carregarPendentes() {
         const res = await fetch(`${API_URL}/admin/pendentes`);
         const vagas = await res.json();
         const lista = document.getElementById("lista-pendentes");
         lista.innerHTML = "";
-
         if (vagas.length === 0) {
-          lista.innerHTML = "<p>Nenhuma vaga pendente no momento.</p>";
+          lista.innerHTML = '<p style="color:#777">Nada para aprovar hoje.</p>';
           return;
         }
 
@@ -297,19 +347,23 @@
           const item = document.createElement("div");
           item.className = "vaga-pendente";
           item.innerHTML = `
-                    <h3>${vaga.titulo}</h3>
-                    <div class="info">Empresa: ${vaga.empresa} | Salário: ${vaga.salario}</div>
-                    <p style="margin: 10px 0">${vaga.descricao}</p>
-                    <div class="info">Contato: ${vaga.contato}</div>
+                    <div class="vaga-info">
+                        <h3>${vaga.titulo}</h3>
+                        <p>${vaga.empresa} | ${vaga.categoria || "Geral"}</p>
+                        <p>${vaga.salario}</p>
+                    </div>
                     <div class="botoes">
-                        <button class="btn-aprovar" onclick="atualizarStatus(${vaga.id}, 1)">✅ Aprovar</button>
-                        <button class="btn-reprovar" onclick="atualizarStatus(${vaga.id}, 2)">❌ Reprovar</button>
+                        <button class="btn-acao btn-aprovar" onclick="atualizarStatus(${
+                          vaga.id
+                        }, 1)">Aprovar</button>
+                        <button class="btn-acao btn-reprovar" onclick="atualizarStatus(${
+                          vaga.id
+                        }, 2)">Reprovar</button>
                     </div>
                 `;
           lista.appendChild(item);
         });
       }
-
       async function atualizarStatus(id, novoStatus) {
         await fetch(`${API_URL}/admin/vagas/${id}`, {
           method: "PUT",
