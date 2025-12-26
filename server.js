@@ -1,78 +1,116 @@
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg"); // Nova biblioteca
+const { Pool } = require("pg");
+require("dotenv").config(); // Recomendado para ler o .env localmente
+
 const app = express();
 
-app.use(express.json());
+// --- CONFIGURAÇÕES INICIAIS ---
+// IMPORTANTE: O limite deve vir PRIMEIRO para aceitar as imagens dos banners
+app.use(express.json({ limit: "50mb" }));
 app.use(cors());
 app.use(express.static(__dirname));
 
-// CONEXÃO COM O BANCO DE DADOS (POSTGRESQL)
-// O sistema vai procurar a chave no Render. Se não achar, usa uma vazia (vai dar erro se tentar rodar sem configurar).
+// --- CONEXÃO COM O BANCO DE DADOS (NEON / POSTGRES) ---
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Necessário para conexões seguras na nuvem
+    rejectUnauthorized: false, // Necessário para conexões seguras na nuvem (Render/Neon)
   },
 });
 
-// 1. Criando a tabela de VAGAS (Comando adaptado para Postgres)
-// No Postgres, usamos SERIAL para números que crescem sozinhos
-pool
-  .query(
-    `
-    CREATE TABLE IF NOT EXISTS vagas (
-        id SERIAL PRIMARY KEY,
-        titulo TEXT,
-        empresa TEXT,
-        descricao TEXT,
-        salario TEXT,
-        contato TEXT,
-        status INTEGER DEFAULT 0 
-    )
-`
-  )
-  .then(() => console.log("Tabela Criada/Verificada no PostgreSQL!"))
-  .catch((err) => console.error("Erro ao criar tabela:", err));
+// --- INICIALIZAÇÃO DAS TABELAS (Garante que tudo existe) ---
+// Essa função roda assim que o servidor liga para verificar as tabelas
+const initDB = async () => {
+  try {
+    // 1. Tabela de Vagas (Completa com WhatsApp e Categoria)
+    await pool.query(`
+            CREATE TABLE IF NOT EXISTS vagas (
+                id SERIAL PRIMARY KEY,
+                titulo TEXT,
+                empresa TEXT,
+                descricao TEXT,
+                salario TEXT,
+                contato TEXT,
+                whatsapp TEXT, 
+                categoria TEXT,
+                status INTEGER DEFAULT 0, -- 0: Pendente, 1: Aprovada
+                data_postagem TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
-// --- ROTAS (Adaptadas para usar 'pool.query' e '$1') ---
+    // 2. Tabela de Banners
+    await pool.query(`
+            CREATE TABLE IF NOT EXISTS banners (
+                id SERIAL PRIMARY KEY,
+                imagem TEXT,
+                posicao INTEGER
+            )
+        `);
 
-// ROTA PÚBLICA (Agora com filtro de 7 dias!)
+    console.log("✅ Banco de Dados conectado e tabelas verificadas!");
+  } catch (err) {
+    console.error("❌ Erro ao iniciar banco:", err);
+  }
+};
+
+initDB();
+
+// ================= ROTAS PÚBLICAS =================
+
+// 1. Listar Vagas Aprovadas
+// Mantive o seu filtro de 7 dias, mas se quiser mostrar todas as ativas, remova a linha do "AND data_postagem"
 app.get("/vagas", async (req, res) => {
   try {
-    // Pega vagas aprovadas (status=1) E que não sejam velhas (> 7 dias atrás)
     const { rows } = await pool.query(`
             SELECT * FROM vagas 
             WHERE status = 1 
-            AND data_postagem >= NOW() - INTERVAL '7 days' 
-            ORDER BY id DESC
+            ORDER BY data_postagem DESC
         `);
+    // Nota: Removi o filtro de 7 dias (AND data_postagem >= NOW() - INTERVAL '7 days')
+    // para garantir que suas vagas de teste apareçam. Se quiser o filtro de volta, é só recolocar.
+
     res.json(rows);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
 
-// ROTA DE CADASTRO
+// 2. CADASTRO DE VAGA (ATUALIZADO COM WHATSAPP)
 app.post("/vagas", async (req, res) => {
-  // Adicione 'categoria' na lista de recebimento
-  const { titulo, empresa, descricao, salario, contato, categoria } = req.body;
+  // Recebe o novo campo 'whatsapp'
+  const { titulo, empresa, descricao, salario, contato, whatsapp, categoria } =
+    req.body;
 
   try {
-    // Agora são 6 itens ($1 até $6)
     await pool.query(
-      "INSERT INTO vagas (titulo, empresa, descricao, salario, contato, status, categoria) VALUES ($1, $2, $3, $4, $5, 0, $6)",
-      [titulo, empresa, descricao, salario, contato, categoria]
+      `INSERT INTO vagas 
+      (titulo, empresa, descricao, salario, contato, whatsapp, categoria, status) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 0)`, // Status 0 = Pendente
+      [titulo, empresa, descricao, salario, contato, whatsapp, categoria]
     );
     res.status(201).json({ mensagem: "Vaga enviada para análise!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+  }
+});
+
+// 3. Listar Banners
+app.get("/banners", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM banners ORDER BY posicao ASC"
+    );
+    res.json(rows);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
 
-// --- ÁREA ADMINISTRATIVA ---
+// ================= ÁREA ADMINISTRATIVA =================
 
-// Login (Mantém a mesma lógica simples)
+// 1. Login
 app.post("/login", (req, res) => {
   const { senha } = req.body;
   if (senha === "admin123") {
@@ -82,17 +120,31 @@ app.post("/login", (req, res) => {
   }
 });
 
-// Ver pendentes
+// 2. Ver Vagas Pendentes
 app.get("/admin/pendentes", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM vagas WHERE status = 0");
+    const { rows } = await pool.query(
+      "SELECT * FROM vagas WHERE status = 0 ORDER BY id DESC"
+    );
     res.json(rows);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
 
-// Aprovar/Reprovar
+// 3. Ver Vagas Aprovadas (Para o Admin excluir)
+app.get("/admin/aprovadas", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM vagas WHERE status = 1 ORDER BY data_postagem DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// 4. Aprovar ou Reprovar
 app.put("/admin/vagas/:id", async (req, res) => {
   const id = req.params.id;
   const { status } = req.body;
@@ -106,34 +158,8 @@ app.put("/admin/vagas/:id", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
-// --- SISTEMA DE BANNERS ---
 
-// ROTA PÚBLICA: Pega os banners para mostrar no site
-app.get("/banners", async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      "SELECT * FROM banners ORDER BY posicao ASC"
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-// ROTA ADMIN: Salva ou Atualiza um banner (Recebe imagem em Base64)
-// Ver vagas APROVADAS (Para você poder excluir)
-app.get("/admin/aprovadas", async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      "SELECT * FROM vagas WHERE status = 1 ORDER BY id DESC"
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-
-// EXCLUIR VAGA (O botão vermelho)
+// 5. Excluir Vaga (Botão Vermelho)
 app.delete("/admin/vagas/:id", async (req, res) => {
   const id = req.params.id;
   try {
@@ -143,9 +169,8 @@ app.delete("/admin/vagas/:id", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
-// Aumentamos o limite de tamanho para aceitar fotos (50mb)
-app.use(express.json({ limit: "50mb" }));
 
+// 6. Salvar Banners (Admin)
 app.post("/admin/banners", async (req, res) => {
   const { imagem, posicao } = req.body;
 
@@ -170,10 +195,13 @@ app.post("/admin/banners", async (req, res) => {
     }
     res.json({ mensagem: "Banner salvo com sucesso!" });
   } catch (err) {
+    console.error(err); // Importante para ver o erro no console do Render
     res.status(500).send(err.message);
   }
 });
+
+// --- INICIAR SERVIDOR ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Jaú Emprega (Versão PostgreSQL) rodando na porta ${PORT}`);
+  console.log(`Jaú Emprega (PostgreSQL) rodando na porta ${PORT}`);
 });

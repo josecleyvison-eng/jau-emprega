@@ -4,25 +4,12 @@
     <meta property="og:title" content="Jaú Emprega - Vagas na Cidade" />
     <meta
       property="og:description"
-      content="Está procurando emprego ou contratando? Acesse o portal gratuito de vagas de Jaú."
+      content="Portal gratuito de vagas de Jaú."
     />
-    <meta
-      property="og:image"
-      content="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop"
-    />
-    <meta
-      property="og:url"
-      content="https://jau-emprega-oficial.onrender.com/"
-    />
-    <meta property="og:type" content="website" />
     <meta name="theme-color" content="#004aad" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jaú Emprega - Vagas na Cidade</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>"
-    />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
@@ -46,13 +33,6 @@
         padding: 20px;
         text-align: center;
       }
-      header h1 {
-        margin-bottom: 5px;
-      }
-      header p {
-        opacity: 0.8;
-      }
-
       .container {
         max-width: 800px;
         margin: 20px auto;
@@ -73,13 +53,16 @@
       }
 
       input,
-      textarea {
+      textarea,
+      select {
         width: 100%;
         padding: 10px;
         margin-bottom: 10px;
         border: 1px solid #ddd;
         border-radius: 5px;
+        outline: none;
       }
+
       button.btn-enviar {
         background: #28a745;
         color: white;
@@ -94,19 +77,51 @@
         background: #218838;
       }
 
+      /* --- Botões de Contato (NOVOS) --- */
+      .area-botoes {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+      .btn-contato-geral {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: bold;
+        color: white;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-width: 120px;
+      }
+      .btn-email {
+        background-color: #004aad;
+      }
+      .btn-email:hover {
+        background-color: #003380;
+      }
+
+      .btn-whats {
+        background-color: #25d366;
+      }
+      .btn-whats:hover {
+        background-color: #128c7e;
+      }
+
       /* --- Campo de Busca --- */
       .busca-container {
         margin-bottom: 20px;
         position: relative;
       }
       #campo-busca {
-        width: 100%;
-        padding: 15px;
         padding-left: 45px;
         border-radius: 30px;
         border: 2px solid #004aad;
-        font-size: 1rem;
-        outline: none;
       }
       .icone-busca {
         position: absolute;
@@ -127,13 +142,12 @@
       }
       .vaga-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       }
 
       .vaga-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start; /* Alinha no topo caso o texto seja grande */
+        align-items: flex-start;
         margin-bottom: 10px;
       }
       .vaga-titulo {
@@ -148,29 +162,13 @@
         border-radius: 4px;
         font-size: 0.8rem;
         font-weight: bold;
-        display: inline-block;
-      }
-      .vaga-detalhes {
-        font-size: 0.9rem;
-        color: #555;
-        margin-bottom: 10px;
       }
       .vaga-salario {
         color: #28a745;
         font-weight: bold;
       }
-      .btn-contato {
-        display: inline-block;
-        background: #004aad;
-        color: white;
-        text-decoration: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        font-size: 0.9rem;
-        margin-top: 10px;
-      }
 
-      /* Estilos do Banner */
+      /* Banner */
       .banner-container {
         width: 100%;
         max-width: 500px;
@@ -178,8 +176,6 @@
         margin: 20px auto;
         border-radius: 10px;
         overflow: hidden;
-        position: relative;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         display: none;
       }
       .banner-img {
@@ -214,7 +210,7 @@
         <input
           type="text"
           id="titulo"
-          placeholder="Título da Vaga (ex: Vendedor Interno)"
+          placeholder="Título da Vaga (ex: Vendedor)"
         />
         <input type="text" id="empresa" placeholder="Nome da Empresa" />
         <input
@@ -222,27 +218,28 @@
           id="salario"
           placeholder="Salário (ex: R$ 1.800 ou A Combinar)"
         />
-        <input
-          type="text"
-          id="contato"
-          placeholder="Contato (Email ou WhatsApp)"
-        />
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <input
+            type="email"
+            id="contato"
+            placeholder="E-mail para currículo (Obrigatório)"
+            style="flex: 1"
+          />
+          <input
+            type="text"
+            id="whatsapp"
+            placeholder="WhatsApp ex: 14999999999 (Opcional)"
+            style="flex: 1"
+          />
+        </div>
+
         <textarea
           id="descricao"
           rows="4"
           placeholder="Descrição das atividades..."
         ></textarea>
-        <select
-          id="categoria"
-          style="
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            background: white;
-          "
-        >
+        <select id="categoria">
           <option value="" disabled selected>Selecione a Área da Vaga</option>
           <option value="Vendas">Vendas / Comercial</option>
           <option value="Administrativo">Administrativo / Escritório</option>
@@ -265,7 +262,7 @@
         <input
           type="text"
           id="campo-busca"
-          placeholder="Pesquisar vaga por título..."
+          placeholder="Pesquisar vaga..."
           onkeyup="filtrarVagas()"
         />
       </div>
@@ -274,24 +271,19 @@
     </div>
 
     <script>
-      // Mantenha vazio para funcionar no Render
       const API_URL = "";
-
-      // MEMÓRIA: Aqui guardamos todas as vagas baixadas do servidor
       let todasAsVagas = [];
 
-      // 1. Carregar vagas e salvar na memória
       async function carregarVagas() {
         try {
           const res = await fetch(`${API_URL}/vagas`);
           todasAsVagas = await res.json();
           renderizarVagas(todasAsVagas);
         } catch (erro) {
-          console.error("Erro ao buscar vagas:", erro);
+          console.error("Erro:", erro);
         }
       }
 
-      // 2. Função que desenha as vagas na tela (AGORA COM DATA!)
       function renderizarVagas(listaDeVagas) {
         const listaHTML = document.getElementById("lista-vagas");
         listaHTML.innerHTML = "";
@@ -303,29 +295,38 @@
         }
 
         listaDeVagas.forEach((vaga) => {
-          // --- Lógica da Data Nova ---
+          // --- Data ---
           let dataHtml = "";
           if (vaga.data_postagem) {
-            const dataObj = new Date(vaga.data_postagem);
-            // Formata: 26/12
-            const diaMes = dataObj.toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "2-digit",
-            });
-            // Formata: 16:30
-            const hora = dataObj.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-
-            // Monta o HTML pequeno
-            dataHtml = `<div style="font-size: 0.7rem; color: #888; margin-top: 3px;">🕒 ${diaMes} às ${hora}</div>`;
+            const d = new Date(vaga.data_postagem);
+            dataHtml = `<div style="font-size:0.7rem; color:#888;">🕒 ${d.toLocaleDateString(
+              "pt-BR"
+            )}</div>`;
           }
-          // ---------------------------
+
+          // --- BOTÕES DE CONTATO INTELIGENTES ---
+          let botoesHtml = "";
+
+          // 1. Botão de Email (Se existir)
+          if (vaga.contato) {
+            botoesHtml += `
+                <a href="mailto:${vaga.contato}" class="btn-contato-geral btn-email">
+                    📧 Enviar E-mail
+                </a>`;
+          }
+
+          // 2. Botão de WhatsApp (Se existir)
+          if (vaga.whatsapp) {
+            // Limpa o número (remove ( ) - e espaços) para o link funcionar
+            const numLimpo = vaga.whatsapp.replace(/\D/g, "");
+            botoesHtml += `
+                <a href="https://wa.me/55${numLimpo}" target="_blank" class="btn-contato-geral btn-whats">
+                    📱 WhatsApp
+                </a>`;
+          }
 
           const item = document.createElement("div");
           item.className = "vaga-card";
-
           item.innerHTML = `
                 <div class="vaga-header">
                     <div class="vaga-titulo">${vaga.titulo}</div>
@@ -343,39 +344,39 @@
                     }</span> <br>
                     <p style="margin-top:5px">${vaga.descricao}</p>
                 </div>
-                <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
+                
+                <div class="area-botoes">
+                    ${botoesHtml}
+                </div>
             `;
           listaHTML.appendChild(item);
         });
       }
 
-      // 3. Função de Filtrar
       function filtrarVagas() {
         const termo = document
           .getElementById("campo-busca")
           .value.toLowerCase();
-
-        const vagasFiltradas = todasAsVagas.filter((vaga) => {
-          return (
-            vaga.titulo.toLowerCase().includes(termo) ||
-            vaga.empresa.toLowerCase().includes(termo)
-          );
-        });
-
-        renderizarVagas(vagasFiltradas);
+        const filtradas = todasAsVagas.filter(
+          (v) =>
+            v.titulo.toLowerCase().includes(termo) ||
+            v.empresa.toLowerCase().includes(termo)
+        );
+        renderizarVagas(filtradas);
       }
 
-      // 4. Enviar vaga
       async function enviarVaga() {
+        // Pega os dados
         const titulo = document.getElementById("titulo").value;
         const empresa = document.getElementById("empresa").value;
         const salario = document.getElementById("salario").value;
-        const contato = document.getElementById("contato").value;
+        const contato = document.getElementById("contato").value; // Email
+        const whatsapp = document.getElementById("whatsapp").value; // Zap Novo
         const descricao = document.getElementById("descricao").value;
         const categoria = document.getElementById("categoria").value;
 
         if (!titulo || !contato || !categoria)
-          return alert("Preencha título, contato e categoria!");
+          return alert("Preencha título, e-mail e categoria!");
 
         try {
           const resposta = await fetch(`${API_URL}/vagas`, {
@@ -386,6 +387,7 @@
               empresa,
               salario,
               contato,
+              whatsapp,
               descricao,
               categoria,
             }),
@@ -395,58 +397,44 @@
             alert("Vaga enviada para aprovação!");
             location.reload();
           } else {
-            alert("Erro ao enviar. Verifique o console.");
+            alert("Erro ao enviar.");
           }
         } catch (error) {
-          console.error("Erro no envio:", error);
+          console.error(error);
           alert("Erro de conexão.");
         }
       }
 
-      // --- LÓGICA DO CARROSSEL ---
+      // --- Banners Carrossel ---
       let bannerIndex = 0;
-
       async function carregarBanners() {
         try {
           const res = await fetch(`${API_URL}/banners`);
           const banners = await res.json();
-
           const area = document.getElementById("area-banners");
-
           if (banners.length > 0) {
             area.style.display = "block";
             area.innerHTML = "";
-
-            banners.forEach((b, index) => {
+            banners.forEach((b, i) => {
               const img = document.createElement("img");
               img.src = b.imagem;
               img.className = "banner-img";
-              if (index === 0) img.classList.add("banner-ativo");
+              if (i === 0) img.classList.add("banner-ativo");
               area.appendChild(img);
             });
-
-            if (banners.length > 1) {
-              setInterval(rodarCarrossel, 5000);
-            }
+            if (banners.length > 1) setInterval(rodarCarrossel, 5000);
           }
-        } catch (erro) {
-          console.error("Erro nos banners:", erro);
-        }
+        } catch (e) {}
       }
-
       function rodarCarrossel() {
-        const imagens = document.getElementsByClassName("banner-img");
-        if (imagens.length === 0) return;
-
-        imagens[bannerIndex].classList.remove("banner-ativo");
-
+        const imgs = document.getElementsByClassName("banner-img");
+        if (imgs.length === 0) return;
+        imgs[bannerIndex].classList.remove("banner-ativo");
         bannerIndex++;
-        if (bannerIndex >= imagens.length) bannerIndex = 0;
-
-        imagens[bannerIndex].classList.add("banner-ativo");
+        if (bannerIndex >= imgs.length) bannerIndex = 0;
+        imgs[bannerIndex].classList.add("banner-ativo");
       }
 
-      // INICIALIZAÇÃO
       carregarBanners();
       carregarVagas();
     </script>
