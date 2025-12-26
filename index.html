@@ -21,7 +21,6 @@
         color: #333;
       }
 
-      /* Cabeçalho */
       header {
         background: #004aad;
         color: white;
@@ -35,14 +34,13 @@
         opacity: 0.8;
       }
 
-      /* Container Principal */
       .container {
         max-width: 800px;
         margin: 20px auto;
         padding: 0 15px;
       }
 
-      /* Formulário de Cadastro (Card Branco) */
+      /* Card Branco do Formulário */
       .card-form {
         background: white;
         padding: 20px;
@@ -77,6 +75,27 @@
         background: #218838;
       }
 
+      /* --- NOVO: Campo de Busca --- */
+      .busca-container {
+        margin-bottom: 20px;
+        position: relative;
+      }
+      #campo-busca {
+        width: 100%;
+        padding: 15px;
+        padding-left: 45px; /* Espaço para o ícone */
+        border-radius: 30px; /* Bordas redondass */
+        border: 2px solid #004aad;
+        font-size: 1rem;
+        outline: none;
+      }
+      .icone-busca {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+        font-size: 1.2rem;
+      }
+
       /* Lista de Vagas */
       .vaga-card {
         background: white;
@@ -85,7 +104,13 @@
         border-left: 5px solid #004aad;
         margin-bottom: 15px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: 0.3s;
       }
+      .vaga-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
       .vaga-header {
         display: flex;
         justify-content: space-between;
@@ -149,7 +174,7 @@
         <input
           type="text"
           id="contato"
-          placeholder="Contato (Email ou WhatsApp para envio de currículo)"
+          placeholder="Contato (Email ou WhatsApp)"
         />
         <textarea
           id="descricao"
@@ -162,27 +187,51 @@
       </div>
 
       <h2 style="margin-bottom: 15px">Vagas Recentes</h2>
+
+      <div class="busca-container">
+        <span class="icone-busca">🔍</span>
+        <input
+          type="text"
+          id="campo-busca"
+          placeholder="Pesquisar vaga por título..."
+          onkeyup="filtrarVagas()"
+        />
+      </div>
+
       <div id="lista-vagas"></div>
     </div>
 
     <script>
+      // Mantenha vazio para funcionar no Render
       const API_URL = "";
 
-      // 1. Carregar vagas (Público vê apenas as APROVADAS)
+      // MEMÓRIA: Aqui guardamos todas as vagas baixadas do servidor
+      let todasAsVagas = [];
+
+      // 1. Carregar vagas e salvar na memória
       async function carregarVagas() {
-        const res = await fetch(`${API_URL}/vagas`);
-        const vagas = await res.json();
+        try {
+          const res = await fetch(`${API_URL}/vagas`);
+          todasAsVagas = await res.json(); // Salva na variável global
 
-        const lista = document.getElementById("lista-vagas");
-        lista.innerHTML = "";
+          renderizarVagas(todasAsVagas); // Mostra todas inicialmente
+        } catch (erro) {
+          console.error("Erro ao buscar vagas:", erro);
+        }
+      }
 
-        if (vagas.length === 0) {
-          lista.innerHTML =
-            '<p style="text-align:center; color:#777">Nenhuma vaga disponível no momento.</p>';
+      // 2. Função que desenha as vagas na tela (Reutilizável)
+      function renderizarVagas(listaDeVagas) {
+        const listaHTML = document.getElementById("lista-vagas");
+        listaHTML.innerHTML = ""; // Limpa a tela
+
+        if (listaDeVagas.length === 0) {
+          listaHTML.innerHTML =
+            '<p style="text-align:center; color:#777">Nenhuma vaga encontrada.</p>';
           return;
         }
 
-        vagas.forEach((vaga) => {
+        listaDeVagas.forEach((vaga) => {
           const item = document.createElement("div");
           item.className = "vaga-card";
           item.innerHTML = `
@@ -196,11 +245,29 @@
                     </div>
                     <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
                 `;
-          lista.appendChild(item);
+          listaHTML.appendChild(item);
         });
       }
 
-      // 2. Enviar vaga (Vai com status "Pendente")
+      // 3. Função de Filtrar (A Mágica da Busca)
+      function filtrarVagas() {
+        const termo = document
+          .getElementById("campo-busca")
+          .value.toLowerCase();
+
+        // Filtra a lista da memória
+        const vagasFiltradas = todasAsVagas.filter((vaga) => {
+          return (
+            vaga.titulo.toLowerCase().includes(termo) ||
+            vaga.empresa.toLowerCase().includes(termo)
+          );
+        });
+
+        // Redesenha a tela só com as filtradas
+        renderizarVagas(vagasFiltradas);
+      }
+
+      // 4. Enviar vaga (Igual ao anterior)
       async function enviarVaga() {
         const titulo = document.getElementById("titulo").value;
         const empresa = document.getElementById("empresa").value;
@@ -208,8 +275,7 @@
         const contato = document.getElementById("contato").value;
         const descricao = document.getElementById("descricao").value;
 
-        if (!titulo || !contato)
-          return alert("Preencha pelo menos o título e contato!");
+        if (!titulo || !contato) return alert("Preencha título e contato!");
 
         await fetch(`${API_URL}/vagas`, {
           method: "POST",
@@ -223,11 +289,8 @@
           }),
         });
 
-        alert(
-          "Vaga enviada com sucesso! Ela aparecerá no site após a aprovação do administrador."
-        );
+        alert("Vaga enviada para aprovação!");
 
-        // Limpa os campos
         document.getElementById("titulo").value = "";
         document.getElementById("empresa").value = "";
         document.getElementById("descricao").value = "";
