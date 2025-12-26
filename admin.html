@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin - Login</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background: #222;
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 800px;
+        width: 100%;
+      }
+
+      /* Estilos da TELA DE LOGIN */
+      #tela-login {
+        background: #333;
+        padding: 40px;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      }
+      input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        margin: 15px 0;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+      }
+      .btn-entrar {
+        width: 100%;
+        padding: 12px;
+        background: #004aad;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .btn-entrar:hover {
+        background: #003885;
+      }
+
+      /* Estilos do PAINEL (Inicialmente escondido) */
+      #painel-admin {
+        display: none;
+      } /* O segredo está aqui! */
+
+      h1 {
+        border-bottom: 1px solid #555;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .vaga-pendente {
+        background: #444;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #ffc107;
+      }
+      .botoes {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        color: white;
+      }
+      .btn-aprovar {
+        background: #28a745;
+      }
+      .btn-reprovar {
+        background: #dc3545;
+      }
+      .info {
+        font-size: 0.9rem;
+        color: #ccc;
+        margin-bottom: 5px;
+      }
+
+      /* Mensagem de Erro */
+      #erro-msg {
+        color: #ff6b6b;
+        margin-top: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="tela-login">
+      <h2>🔒 Área Restrita</h2>
+      <p>Digite a senha de administrador</p>
+      <input type="password" id="campo-senha" placeholder="Senha" />
+      <button class="btn-entrar" onclick="fazerLogin()">Entrar</button>
+      <p id="erro-msg">Senha incorreta!</p>
+    </div>
+
+    <div id="painel-admin" class="container">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <h1>Painel Administrativo</h1>
+        <button onclick="sair()" style="background: #555">Sair</button>
+      </div>
+
+      <p>Vagas aguardando sua aprovação:</p>
+      <div id="lista-pendentes"></div>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:3000";
+
+      // Lógica de Login
+      async function fazerLogin() {
+        const senha = document.getElementById("campo-senha").value;
+        const erroMsg = document.getElementById("erro-msg");
+
+        try {
+          // Pergunta pro servidor se a senha está certa
+          const res = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ senha }),
+          });
+
+          const dados = await res.json();
+
+          if (dados.sucesso) {
+            // SEGREDO: Esconde o login e mostra o painel
+            document.getElementById("tela-login").style.display = "none";
+            document.getElementById("painel-admin").style.display = "block";
+            document.body.style.alignItems = "flex-start"; // Ajuste visual
+
+            carregarPendentes(); // Busca as vagas
+          } else {
+            erroMsg.style.display = "block";
+          }
+        } catch (error) {
+          alert("Erro ao conectar no servidor.");
+        }
+      }
+
+      function sair() {
+        location.reload(); // Recarrega a página para bloquear de novo
+      }
+
+      // --- Funções do Admin (Iguais ao anterior) ---
+      async function carregarPendentes() {
+        const res = await fetch(`${API_URL}/admin/pendentes`);
+        const vagas = await res.json();
+        const lista = document.getElementById("lista-pendentes");
+        lista.innerHTML = "";
+
+        if (vagas.length === 0) {
+          lista.innerHTML = "<p>Nenhuma vaga pendente no momento.</p>";
+          return;
+        }
+
+        vagas.forEach((vaga) => {
+          const item = document.createElement("div");
+          item.className = "vaga-pendente";
+          item.innerHTML = `
+                    <h3>${vaga.titulo}</h3>
+                    <div class="info">Empresa: ${vaga.empresa} | Salário: ${vaga.salario}</div>
+                    <p style="margin: 10px 0">${vaga.descricao}</p>
+                    <div class="info">Contato: ${vaga.contato}</div>
+                    <div class="botoes">
+                        <button class="btn-aprovar" onclick="atualizarStatus(${vaga.id}, 1)">✅ Aprovar</button>
+                        <button class="btn-reprovar" onclick="atualizarStatus(${vaga.id}, 2)">❌ Reprovar</button>
+                    </div>
+                `;
+          lista.appendChild(item);
+        });
+      }
+
+      async function atualizarStatus(id, novoStatus) {
+        await fetch(`${API_URL}/admin/vagas/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: novoStatus }),
+        });
+        carregarPendentes();
+      }
+    </script>
+  </body>
+</html>
