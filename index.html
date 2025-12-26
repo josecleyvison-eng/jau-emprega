@@ -1,16 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-br">
   <head>
-    <meta property="og:title" content="Jaú Emprega - Vagas na Cidade">
-    <meta property="og:description" content="Está procurando emprego ou contratando? Acesse o portal gratuito de vagas de Jaú.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop">
-    <meta property="og:url" content="https://jau-emprega-oficial.onrender.com/">
-    <meta property="og:type" content="website">
-    <meta name="theme-color" content="#004aad">
+    <meta property="og:title" content="Jaú Emprega - Vagas na Cidade" />
+    <meta
+      property="og:description"
+      content="Está procurando emprego ou contratando? Acesse o portal gratuito de vagas de Jaú."
+    />
+    <meta
+      property="og:image"
+      content="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=1200&auto=format&fit=crop"
+    />
+    <meta
+      property="og:url"
+      content="https://jau-emprega-oficial.onrender.com/"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#004aad" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jaú Emprega - Vagas na Cidade</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💼</text></svg>"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
       rel="stylesheet"
@@ -82,7 +94,7 @@
         background: #218838;
       }
 
-      /* --- NOVO: Campo de Busca --- */
+      /* --- Campo de Busca --- */
       .busca-container {
         margin-bottom: 20px;
         position: relative;
@@ -90,8 +102,8 @@
       #campo-busca {
         width: 100%;
         padding: 15px;
-        padding-left: 45px; /* Espaço para o ícone */
-        border-radius: 30px; /* Bordas redondass */
+        padding-left: 45px;
+        border-radius: 30px;
         border: 2px solid #004aad;
         font-size: 1rem;
         outline: none;
@@ -121,7 +133,7 @@
       .vaga-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: flex-start; /* Alinha no topo caso o texto seja grande */
         margin-bottom: 10px;
       }
       .vaga-titulo {
@@ -136,6 +148,7 @@
         border-radius: 4px;
         font-size: 0.8rem;
         font-weight: bold;
+        display: inline-block;
       }
       .vaga-detalhes {
         font-size: 0.9rem;
@@ -155,6 +168,37 @@
         border-radius: 5px;
         font-size: 0.9rem;
         margin-top: 10px;
+      }
+
+      /* Estilos do Banner */
+      .banner-container {
+        width: 100%;
+        max-width: 500px;
+        aspect-ratio: 1 / 1;
+        margin: 20px auto;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        display: none;
+      }
+      .banner-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+      .banner-ativo {
+        display: block;
+        animation: fade 1s;
+      }
+      @keyframes fade {
+        from {
+          opacity: 0.4;
+        }
+        to {
+          opacity: 1;
+        }
       }
     </style>
   </head>
@@ -211,36 +255,9 @@
           Enviar para Aprovação
         </button>
       </div>
-<style>
-            .banner-container {
-                width: 100%;
-                max-width: 500px;
-                aspect-ratio: 1 / 1;
-                margin: 20px auto;
-                border-radius: 10px;
-                overflow: hidden;
-                position: relative;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                display: none; 
-            }
-            .banner-img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: none; 
-            }
-            .banner-ativo {
-                display: block; 
-                animation: fade 1s;
-            }
-            @keyframes fade {
-                from { opacity: 0.4 } 
-                to { opacity: 1 }
-            }
-        </style>
 
-        <div id="area-banners" class="banner-container">
-            </div>
+      <div id="area-banners" class="banner-container"></div>
+
       <h2 style="margin-bottom: 15px">Vagas Recentes</h2>
 
       <div class="busca-container">
@@ -274,7 +291,7 @@
         }
       }
 
-      // 2. Função que desenha as vagas na tela
+      // 2. Função que desenha as vagas na tela (AGORA COM DATA!)
       function renderizarVagas(listaDeVagas) {
         const listaHTML = document.getElementById("lista-vagas");
         listaHTML.innerHTML = "";
@@ -286,27 +303,48 @@
         }
 
         listaDeVagas.forEach((vaga) => {
+          // --- Lógica da Data Nova ---
+          let dataHtml = "";
+          if (vaga.data_postagem) {
+            const dataObj = new Date(vaga.data_postagem);
+            // Formata: 26/12
+            const diaMes = dataObj.toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+            });
+            // Formata: 16:30
+            const hora = dataObj.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            // Monta o HTML pequeno
+            dataHtml = `<div style="font-size: 0.7rem; color: #888; margin-top: 3px;">🕒 ${diaMes} às ${hora}</div>`;
+          }
+          // ---------------------------
+
           const item = document.createElement("div");
           item.className = "vaga-card";
-          // O HTML abaixo deve estar ENTRE CRASE (`) para funcionar no JS
+
           item.innerHTML = `
-                    <div class="vaga-header">
-                        <div class="vaga-titulo">${vaga.titulo}</div>
-                        <div style="text-align:right">
-                            <div class="vaga-empresa">${vaga.empresa}</div>
-                            <small style="background:#ddd; padding:2px 5px; border-radius:4px; font-size:0.7rem; color:#555">
-                                ${vaga.categoria || "Geral"}
-                            </small>
-                        </div>
+                <div class="vaga-header">
+                    <div class="vaga-titulo">${vaga.titulo}</div>
+                    <div style="text-align:right">
+                        <div class="vaga-empresa">${vaga.empresa}</div>
+                        <small style="background:#ddd; padding:2px 5px; border-radius:4px; font-size:0.7rem; color:#555">
+                            ${vaga.categoria || "Geral"}
+                        </small>
+                        ${dataHtml}
                     </div>
-                    <div class="vaga-detalhes">
-                        <strong>Salário:</strong> <span class="vaga-salario">${
-                          vaga.salario
-                        }</span> <br>
-                        <p style="margin-top:5px">${vaga.descricao}</p>
-                    </div>
-                    <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
-                `;
+                </div>
+                <div class="vaga-detalhes">
+                    <strong>Salário:</strong> <span class="vaga-salario">${
+                      vaga.salario
+                    }</span> <br>
+                    <p style="margin-top:5px">${vaga.descricao}</p>
+                </div>
+                <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
+            `;
           listaHTML.appendChild(item);
         });
       }
@@ -327,7 +365,7 @@
         renderizarVagas(vagasFiltradas);
       }
 
-      // 4. Enviar vaga (Atualizada com categoria)
+      // 4. Enviar vaga
       async function enviarVaga() {
         const titulo = document.getElementById("titulo").value;
         const empresa = document.getElementById("empresa").value;
@@ -364,59 +402,52 @@
           alert("Erro de conexão.");
         }
       }
-// ... (código da função enviarVaga acima) ...
 
-        // ⬇️⬇️⬇️ COLE O JAVASCRIPT DO BANNER AQUI ⬇️⬇️⬇️
+      // --- LÓGICA DO CARROSSEL ---
+      let bannerIndex = 0;
 
-        // --- LÓGICA DO CARROSSEL ---
-        let bannerIndex = 0;
+      async function carregarBanners() {
+        try {
+          const res = await fetch(`${API_URL}/banners`);
+          const banners = await res.json();
 
-        async function carregarBanners() {
-            try {
-                const res = await fetch(`${API_URL}/banners`);
-                const banners = await res.json();
-                
-                const area = document.getElementById('area-banners');
-                
-                if (banners.length > 0) {
-                    area.style.display = 'block'; 
-                    area.innerHTML = ''; 
+          const area = document.getElementById("area-banners");
 
-                    banners.forEach((b, index) => {
-                        const img = document.createElement('img');
-                        img.src = b.imagem;
-                        img.className = 'banner-img';
-                        if (index === 0) img.classList.add('banner-ativo'); 
-                        area.appendChild(img);
-                    });
+          if (banners.length > 0) {
+            area.style.display = "block";
+            area.innerHTML = "";
 
-                    if (banners.length > 1) {
-                        setInterval(rodarCarrossel, 5000); 
-                    }
-                }
-            } catch (erro) {
-                console.error("Erro nos banners:", erro);
+            banners.forEach((b, index) => {
+              const img = document.createElement("img");
+              img.src = b.imagem;
+              img.className = "banner-img";
+              if (index === 0) img.classList.add("banner-ativo");
+              area.appendChild(img);
+            });
+
+            if (banners.length > 1) {
+              setInterval(rodarCarrossel, 5000);
             }
+          }
+        } catch (erro) {
+          console.error("Erro nos banners:", erro);
         }
+      }
 
-        function rodarCarrossel() {
-            const imagens = document.getElementsByClassName('banner-img');
-            if(imagens.length === 0) return;
+      function rodarCarrossel() {
+        const imagens = document.getElementsByClassName("banner-img");
+        if (imagens.length === 0) return;
 
-            imagens[bannerIndex].classList.remove('banner-ativo');
-            
-            bannerIndex++;
-            if (bannerIndex >= imagens.length) bannerIndex = 0; 
+        imagens[bannerIndex].classList.remove("banner-ativo");
 
-            imagens[bannerIndex].classList.add('banner-ativo');
-        }
+        bannerIndex++;
+        if (bannerIndex >= imagens.length) bannerIndex = 0;
 
-        // ⬇️ NÃO ESQUEÇA DE CHAMAR A FUNÇÃO AQUI:
-        carregarBanners(); 
-        carregarVagas();
-    </script>
-</body>
-</html>
+        imagens[bannerIndex].classList.add("banner-ativo");
+      }
+
+      // INICIALIZAÇÃO
+      carregarBanners();
       carregarVagas();
     </script>
   </body>

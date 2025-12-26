@@ -389,37 +389,67 @@
 
         // ⬇️⬇️⬇️ COLE O CÓDIGO NOVO AQUI EMBAIXO ⬇️⬇️⬇️
 
-        // Carregar vagas APROVADAS (Ativas)
-        async function carregarAprovadas() {
-            const res = await fetch(`${API_URL}/admin/aprovadas`);
-            const vagas = await res.json();
-            const lista = document.getElementById('lista-aprovadas');
-            lista.innerHTML = '';
+       // Substitua a função "carregarAprovadas" antiga por esta nova:
 
-            if(vagas.length === 0) {
-                lista.innerHTML = '<p style="color:#777">Nenhuma vaga ativa.</p>';
-                return;
-            }
+async function carregarAprovadas() {
+    try {
+        const res = await fetch(`${API_URL}/admin/aprovadas`);
+        const vagas = await res.json();
+        const lista = document.getElementById("lista-aprovadas");
+        lista.innerHTML = "";
 
-            vagas.forEach(vaga => {
-                const dataFormatada = new Date(vaga.data_postagem).toLocaleDateString('pt-BR');
-                
-                const item = document.createElement('div');
-                item.className = 'vaga-pendente'; 
-                item.style.borderLeft = '5px solid #28a745'; 
-                
-                item.innerHTML = `
-                    <div class="vaga-info">
-                        <h3>${vaga.titulo} <small style="font-size:0.8rem; color:#aaa">(${dataFormatada})</small></h3>
-                        <p>${vaga.empresa}</p>
-                    </div>
-                    <div class="botoes">
-                        <button class="btn-acao btn-reprovar" onclick="excluirVaga(${vaga.id})">🗑️ Excluir</button>
-                    </div>
-                `;
-                lista.appendChild(item);
-            });
+        if (vagas.length === 0) {
+            lista.innerHTML = '<p style="color:#777">Nenhuma vaga ativa.</p>';
+            return;
         }
+
+        vagas.forEach((vaga) => {
+            // --- Lógica da Data ---
+            let dataTexto = "";
+            
+            if (vaga.data_postagem) {
+                // O banco devolve algo tipo "2025-12-26T19:30:00.000Z"
+                const dataObj = new Date(vaga.data_postagem);
+                
+                // Converte para o horário local do usuário (Brasil)
+                const diaMes = dataObj.toLocaleDateString('pt-BR', { 
+                    day: '2-digit', 
+                    month: '2-digit' 
+                });
+                const hora = dataObj.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                dataTexto = `<span style="font-size: 0.85rem; color: #888; font-weight: normal; margin-left: 8px;">
+                    📅 ${diaMes} às ${hora}
+                </span>`;
+            }
+            // -----------------------
+
+            const item = document.createElement("div");
+            item.className = "vaga-pendente";
+            // Borda verde para indicar que está ativa
+            item.style.borderLeft = "5px solid #28a745"; 
+
+            item.innerHTML = `
+                <div class="vaga-info">
+                    <h3 style="display: flex; align-items: center; flex-wrap: wrap;">
+                        ${vaga.titulo} 
+                        ${dataTexto}
+                    </h3>
+                    <p>${vaga.empresa}</p>
+                </div>
+                <div class="botoes">
+                    <button class="btn-acao btn-reprovar" onclick="excluirVaga(${vaga.id})">🗑️ Excluir</button>
+                </div>
+            `;
+            lista.appendChild(item);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar aprovadas:", error);
+    }
+}
 
         // Função de Excluir
         async function excluirVaga(id) {
