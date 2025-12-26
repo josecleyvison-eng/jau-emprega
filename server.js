@@ -51,12 +51,14 @@ app.get("/vagas", async (req, res) => {
 
 // ROTA DE CADASTRO
 app.post("/vagas", async (req, res) => {
-  const { titulo, empresa, descricao, salario, contato } = req.body;
+  // Adicione 'categoria' na lista de recebimento
+  const { titulo, empresa, descricao, salario, contato, categoria } = req.body;
+
   try {
-    // Note o uso de $1, $2, $3... em vez de ?
+    // Agora são 6 itens ($1 até $6)
     await pool.query(
-      "INSERT INTO vagas (titulo, empresa, descricao, salario, contato, status) VALUES ($1, $2, $3, $4, $5, 0)",
-      [titulo, empresa, descricao, salario, contato]
+      "INSERT INTO vagas (titulo, empresa, descricao, salario, contato, status, categoria) VALUES ($1, $2, $3, $4, $5, 0, $6)",
+      [titulo, empresa, descricao, salario, contato, categoria]
     );
     res.status(201).json({ mensagem: "Vaga enviada para análise!" });
   } catch (err) {

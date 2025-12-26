@@ -181,6 +181,25 @@
           rows="4"
           placeholder="Descrição das atividades..."
         ></textarea>
+        <select
+          id="categoria"
+          style="
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+          "
+        >
+          <option value="" disabled selected>Selecione a Área da Vaga</option>
+          <option value="Vendas">Vendas / Comercial</option>
+          <option value="Administrativo">Administrativo / Escritório</option>
+          <option value="Saúde">Saúde / Beleza</option>
+          <option value="TI">Tecnologia / Design</option>
+          <option value="Serviços">Serviços Gerais / Obras</option>
+          <option value="Outros">Outros</option>
+        </select>
         <button class="btn-enviar" onclick="enviarVaga()">
           Enviar para Aprovação
         </button>
@@ -202,101 +221,123 @@
     </div>
 
     <script>
-      // Mantenha vazio para funcionar no Render
-      const API_URL = "";
+            // Mantenha vazio para funcionar no Render
+            const API_URL = "";
 
-      // MEMÓRIA: Aqui guardamos todas as vagas baixadas do servidor
-      let todasAsVagas = [];
+            // MEMÓRIA: Aqui guardamos todas as vagas baixadas do servidor
+            let todasAsVagas = [];
 
-      // 1. Carregar vagas e salvar na memória
-      async function carregarVagas() {
-        try {
-          const res = await fetch(`${API_URL}/vagas`);
-          todasAsVagas = await res.json(); // Salva na variável global
+            // 1. Carregar vagas e salvar na memória
+            async function carregarVagas() {
+              try {
+                const res = await fetch(`${API_URL}/vagas`);
+                todasAsVagas = await res.json(); // Salva na variável global
 
-          renderizarVagas(todasAsVagas); // Mostra todas inicialmente
-        } catch (erro) {
-          console.error("Erro ao buscar vagas:", erro);
-        }
+                renderizarVagas(todasAsVagas); // Mostra todas inicialmente
+              } catch (erro) {
+                console.error("Erro ao buscar vagas:", erro);
+              }
+            }
+
+            // 2. Função que desenha as vagas na tela (Reutilizável)
+            function renderizarVagas(listaDeVagas) {
+              const listaHTML = document.getElementById("lista-vagas");
+              listaHTML.innerHTML = ""; // Limpa a tela
+
+              if (listaDeVagas.length === 0) {
+                listaHTML.innerHTML =
+                  <div class="vaga-header">
+          <div class="vaga-titulo">${vaga.titulo}</div>
+          <div style="text-align:right">
+              <div class="vaga-empresa">${vaga.empresa}</div>
+              <small style="background:#ddd; padding:2px 5px; border-radius:4px; font-size:0.7rem; color:#555">
+                  ${vaga.categoria || 'Geral'}
+              </small>
+          </div>
+      </div>;
+                return;
+              }
+
+              listaDeVagas.forEach((vaga) => {
+                const item = document.createElement("div");
+                item.className = "vaga-card";
+                item.innerHTML = `
+                          <div class="vaga-header">
+                              <div class="vaga-titulo">${vaga.titulo}</div>
+                              <div class="vaga-empresa">${vaga.empresa}</div>
+                          </div>
+                          <div class="vaga-detalhes">
+                              <strong>Salário:</strong> <span class="vaga-salario">${vaga.salario}</span> <br>
+                              <p style="margin-top:5px">${vaga.descricao}</p>
+                          </div>
+                          <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
+                      `;
+                listaHTML.appendChild(item);
+              });
+            }
+
+            // 3. Função de Filtrar (A Mágica da Busca)
+            function filtrarVagas() {
+              const termo = document
+                .getElementById("campo-busca")
+                .value.toLowerCase();
+
+              // Filtra a lista da memória
+              const vagasFiltradas = todasAsVagas.filter((vaga) => {
+                return (
+                  vaga.titulo.toLowerCase().includes(termo) ||
+                  vaga.empresa.toLowerCase().includes(termo)
+                );
+              });
+
+              // Redesenha a tela só com as filtradas
+              renderizarVagas(vagasFiltradas);
+            }
+
+            // 4. Enviar vaga (Igual ao anterior)
+            async function enviarVaga() {
+          const titulo = document.getElementById('titulo').value;
+          const empresa = document.getElementById('empresa').value;
+          const salario = document.getElementById('salario').value;
+          const contato = document.getElementById('contato').value;
+          const descricao = document.getElementById('descricao').value;
+          // Pega o valor do select novo
+          const categoria = document.getElementById('categoria').value;
+
+          if(!titulo || !contato || !categoria) return alert("Preencha título, contato e categoria!");
+
+          await fetch(`${API_URL}/vagas`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ titulo, empresa, salario, contato, descricao, categoria }) // Envia a categoria
+          });
+
+          alert("Vaga enviada para aprovação!");
+          location.reload(); // Recarrega para limpar tudo
       }
 
-      // 2. Função que desenha as vagas na tela (Reutilizável)
-      function renderizarVagas(listaDeVagas) {
-        const listaHTML = document.getElementById("lista-vagas");
-        listaHTML.innerHTML = ""; // Limpa a tela
+              if (!titulo || !contato) return alert("Preencha título e contato!");
 
-        if (listaDeVagas.length === 0) {
-          listaHTML.innerHTML =
-            '<p style="text-align:center; color:#777">Nenhuma vaga encontrada.</p>';
-          return;
-        }
+              await fetch(`${API_URL}/vagas`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  titulo,
+                  empresa,
+                  salario,
+                  contato,
+                  descricao,
+                }),
+              });
 
-        listaDeVagas.forEach((vaga) => {
-          const item = document.createElement("div");
-          item.className = "vaga-card";
-          item.innerHTML = `
-                    <div class="vaga-header">
-                        <div class="vaga-titulo">${vaga.titulo}</div>
-                        <div class="vaga-empresa">${vaga.empresa}</div>
-                    </div>
-                    <div class="vaga-detalhes">
-                        <strong>Salário:</strong> <span class="vaga-salario">${vaga.salario}</span> <br>
-                        <p style="margin-top:5px">${vaga.descricao}</p>
-                    </div>
-                    <a href="#" class="btn-contato">📧 ${vaga.contato}</a>
-                `;
-          listaHTML.appendChild(item);
-        });
-      }
+              alert("Vaga enviada para aprovação!");
 
-      // 3. Função de Filtrar (A Mágica da Busca)
-      function filtrarVagas() {
-        const termo = document
-          .getElementById("campo-busca")
-          .value.toLowerCase();
+              document.getElementById("titulo").value = "";
+              document.getElementById("empresa").value = "";
+              document.getElementById("descricao").value = "";
+            }
 
-        // Filtra a lista da memória
-        const vagasFiltradas = todasAsVagas.filter((vaga) => {
-          return (
-            vaga.titulo.toLowerCase().includes(termo) ||
-            vaga.empresa.toLowerCase().includes(termo)
-          );
-        });
-
-        // Redesenha a tela só com as filtradas
-        renderizarVagas(vagasFiltradas);
-      }
-
-      // 4. Enviar vaga (Igual ao anterior)
-      async function enviarVaga() {
-        const titulo = document.getElementById("titulo").value;
-        const empresa = document.getElementById("empresa").value;
-        const salario = document.getElementById("salario").value;
-        const contato = document.getElementById("contato").value;
-        const descricao = document.getElementById("descricao").value;
-
-        if (!titulo || !contato) return alert("Preencha título e contato!");
-
-        await fetch(`${API_URL}/vagas`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titulo,
-            empresa,
-            salario,
-            contato,
-            descricao,
-          }),
-        });
-
-        alert("Vaga enviada para aprovação!");
-
-        document.getElementById("titulo").value = "";
-        document.getElementById("empresa").value = "";
-        document.getElementById("descricao").value = "";
-      }
-
-      carregarVagas();
+            carregarVagas();
     </script>
   </body>
 </html>
