@@ -269,6 +269,9 @@
       <h2 style="margin-bottom: 20px">Vagas Pendentes</h2>
       <div id="lista-pendentes"></div>
     </div>
+<h2 style="margin-top: 40px; border-top: 1px solid #444; padding-top: 20px;">Vagas Ativas (No Ar)</h2>
+    <p style="color:#aaa; font-size:0.9rem">Aqui estão as vagas que todo mundo está vendo. Cuidado ao excluir.</p>
+    <div id="lista-aprovadas"></div>
 
     <script>
       const API_URL = "";
@@ -288,6 +291,7 @@
             document.getElementById("tela-login").style.display = "none";
             document.getElementById("painel-admin").style.display = "block";
             carregarPendentes();
+            carregarAprovadas();
           } else {
             erroMsg.style.display = "block";
           }
@@ -372,6 +376,61 @@
         });
         carregarPendentes();
       }
+      // ... (código anterior que já existia, como o atualizarStatus) ...
+        
+        async function atualizarStatus(id, novoStatus) {
+            await fetch(`${API_URL}/admin/vagas/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: novoStatus })
+            });
+            carregarPendentes();
+        }
+
+        // ⬇️⬇️⬇️ COLE O CÓDIGO NOVO AQUI EMBAIXO ⬇️⬇️⬇️
+
+        // Carregar vagas APROVADAS (Ativas)
+        async function carregarAprovadas() {
+            const res = await fetch(`${API_URL}/admin/aprovadas`);
+            const vagas = await res.json();
+            const lista = document.getElementById('lista-aprovadas');
+            lista.innerHTML = '';
+
+            if(vagas.length === 0) {
+                lista.innerHTML = '<p style="color:#777">Nenhuma vaga ativa.</p>';
+                return;
+            }
+
+            vagas.forEach(vaga => {
+                const dataFormatada = new Date(vaga.data_postagem).toLocaleDateString('pt-BR');
+                
+                const item = document.createElement('div');
+                item.className = 'vaga-pendente'; 
+                item.style.borderLeft = '5px solid #28a745'; 
+                
+                item.innerHTML = `
+                    <div class="vaga-info">
+                        <h3>${vaga.titulo} <small style="font-size:0.8rem; color:#aaa">(${dataFormatada})</small></h3>
+                        <p>${vaga.empresa}</p>
+                    </div>
+                    <div class="botoes">
+                        <button class="btn-acao btn-reprovar" onclick="excluirVaga(${vaga.id})">🗑️ Excluir</button>
+                    </div>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        // Função de Excluir
+        async function excluirVaga(id) {
+            if(confirm("Tem certeza que quer apagar essa vaga para sempre?")) {
+                await fetch(`${API_URL}/admin/vagas/${id}`, { method: 'DELETE' });
+                carregarAprovadas(); 
+            }
+        }
+
+    </script> </body>
+</html>
     </script>
   </body>
 </html>

@@ -37,12 +37,16 @@ pool
 
 // --- ROTAS (Adaptadas para usar 'pool.query' e '$1') ---
 
-// ROTA PÚBLICA
+// ROTA PÚBLICA (Agora com filtro de 7 dias!)
 app.get("/vagas", async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      "SELECT * FROM vagas WHERE status = 1 ORDER BY id DESC"
-    );
+    // Pega vagas aprovadas (status=1) E que não sejam velhas (> 7 dias atrás)
+    const { rows } = await pool.query(`
+            SELECT * FROM vagas 
+            WHERE status = 1 
+            AND data_postagem >= NOW() - INTERVAL '7 days' 
+            ORDER BY id DESC
+        `);
     res.json(rows);
   } catch (err) {
     res.status(500).send(err.message);
@@ -117,6 +121,28 @@ app.get("/banners", async (req, res) => {
 });
 
 // ROTA ADMIN: Salva ou Atualiza um banner (Recebe imagem em Base64)
+// Ver vagas APROVADAS (Para você poder excluir)
+app.get("/admin/aprovadas", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM vagas WHERE status = 1 ORDER BY id DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// EXCLUIR VAGA (O botão vermelho)
+app.delete("/admin/vagas/:id", async (req, res) => {
+  const id = req.params.id;
+  try {
+    await pool.query("DELETE FROM vagas WHERE id = $1", [id]);
+    res.json({ mensagem: "Vaga excluída com sucesso!" });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 // Aumentamos o limite de tamanho para aceitar fotos (50mb)
 app.use(express.json({ limit: "50mb" }));
 
