@@ -77,7 +77,7 @@
         background: #218838;
       }
 
-      /* --- Botões de Contato (NOVOS) --- */
+      /* --- Botões de Contato --- */
       .area-botoes {
         display: flex;
         gap: 10px;
@@ -196,7 +196,8 @@
           opacity: 1;
         }
       }
-      /* Fundo escuro atrás do modal */
+
+      /* --- MODAL PIX --- */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -209,7 +210,6 @@
         align-items: center;
         z-index: 1000;
       }
-      /* A caixinha branca */
       .modal-content {
         background: white;
         padding: 30px;
@@ -233,6 +233,29 @@
         cursor: pointer;
         margin-top: 10px;
         font-weight: bold;
+      }
+
+      /* Animação de sucesso */
+      .sucesso-container {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+      }
+      .checkmark {
+        font-size: 5rem;
+        color: #28a745;
+        animation: pop 0.5s;
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0);
+        }
+        80% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
       }
     </style>
   </head>
@@ -310,27 +333,53 @@
 
     <div id="modal-pix" class="modal-overlay">
       <div class="modal-content">
-        <h2 style="color: #004aad">Quase lá! 🚀</h2>
-        <p>
-          Pague a taxa de <strong>R$ 2,00</strong> para sua vaga ir para
-          aprovação.
-        </p>
+        <div id="area-qr">
+          <h2 style="color: #004aad">Quase lá! 🚀</h2>
+          <p>
+            Pague a taxa de <strong>R$ 2,00</strong> para sua vaga ir para
+            aprovação.
+          </p>
+          <img id="img-qr" class="qr-img" src="" alt="QR Code Pix" />
+          <p style="font-size: 0.9rem; color: #555">Copie o código abaixo:</p>
+          <textarea
+            id="texto-copia"
+            style="
+              width: 100%;
+              height: 50px;
+              font-size: 0.8rem;
+              margin-top: 5px;
+            "
+          ></textarea>
+          <button class="btn-copiar" onclick="copiarPix()">
+            Copiar Código PIX
+          </button>
+        </div>
 
-        <img id="img-qr" class="qr-img" src="" alt="QR Code Pix" />
+        <div id="area-sucesso" class="sucesso-container">
+          <div class="checkmark">✅</div>
+          <h2 style="color: #28a745">Pagamento Confirmado!</h2>
+          <p>Sua vaga foi enviada para aprovação.</p>
+          <p style="font-size: 0.9rem; color: #555">
+            Você já pode fechar esta janela.
+          </p>
+          <button
+            onclick="fecharModal()"
+            style="
+              background: #004aad;
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 5px;
+              margin-top: 15px;
+              cursor: pointer;
+            "
+          >
+            Fechar
+          </button>
+        </div>
 
-        <p style="font-size: 0.9rem; color: #555">
-          Escaneie ou copie o código abaixo:
-        </p>
-
-        <textarea
-          id="texto-copia"
-          style="width: 100%; height: 50px; font-size: 0.8rem; margin-top: 5px"
-        ></textarea>
-
-        <button class="btn-copiar" onclick="copiarPix()">
-          Copiar Código PIX
-        </button>
         <button
+          id="btn-fechar-qr"
           onclick="fecharModal()"
           style="
             background: transparent;
@@ -341,7 +390,7 @@
             text-decoration: underline;
           "
         >
-          Fechar
+          Fechar (Cancelar)
         </button>
       </div>
     </div>
@@ -349,6 +398,7 @@
     <script>
       const API_URL = "";
       let todasAsVagas = [];
+      let intervaloVerificacao = null; // Variável para controlar o timer
 
       async function carregarVagas() {
         try {
@@ -371,7 +421,6 @@
         }
 
         listaDeVagas.forEach((vaga) => {
-          // --- Data ---
           let dataHtml = "";
           if (vaga.data_postagem) {
             const d = new Date(vaga.data_postagem);
@@ -380,20 +429,14 @@
             )}</div>`;
           }
 
-          // --- BOTÕES DE CONTATO INTELIGENTES ---
           let botoesHtml = "";
-
-          // 1. Botão de Email (Se existir)
           if (vaga.contato) {
             botoesHtml += `
                 <a href="mailto:${vaga.contato}" class="btn-contato-geral btn-email">
                     📧 Enviar E-mail
                 </a>`;
           }
-
-          // 2. Botão de WhatsApp (Se existir)
           if (vaga.whatsapp) {
-            // Limpa o número (remove ( ) - e espaços) para o link funcionar
             const numLimpo = vaga.whatsapp.replace(/\D/g, "");
             botoesHtml += `
                 <a href="https://wa.me/55${numLimpo}" target="_blank" class="btn-contato-geral btn-whats">
@@ -420,7 +463,6 @@
                     }</span> <br>
                     <p style="margin-top:5px">${vaga.descricao}</p>
                 </div>
-                
                 <div class="area-botoes">
                     ${botoesHtml}
                 </div>
@@ -442,7 +484,6 @@
       }
 
       async function enviarVaga() {
-        // Pega valores
         const titulo = document.getElementById("titulo").value;
         const empresa = document.getElementById("empresa").value;
         const salario = document.getElementById("salario").value;
@@ -454,7 +495,6 @@
         if (!titulo || !contato || !categoria)
           return alert("Preencha os campos!");
 
-        // Muda texto do botão pra avisar que tá carregando
         const btn = document.querySelector(".btn-enviar");
         btn.innerText = "Gerando PIX...";
         btn.disabled = true;
@@ -477,13 +517,22 @@
           const dados = await resposta.json();
 
           if (resposta.ok) {
-            // ABRIR O MODAL DO PIX
+            // 1. Prepara o Modal
+            document.getElementById("area-sucesso").style.display = "none";
+            document.getElementById("area-qr").style.display = "block";
+            document.getElementById("btn-fechar-qr").style.display =
+              "inline-block";
+
+            // 2. Preenche os dados
             document.getElementById(
               "img-qr"
             ).src = `data:image/png;base64,${dados.pix.imagem_base64}`;
             document.getElementById("texto-copia").value =
               dados.pix.copia_e_cola;
             document.getElementById("modal-pix").style.display = "flex";
+
+            // 3. Inicia verificação automática
+            iniciarVerificacao(dados.pix.id);
           } else {
             alert("Erro: " + dados.error);
           }
@@ -496,15 +545,47 @@
         }
       }
 
+      // --- NOVA FUNÇÃO: Fica perguntando pro servidor ---
+      function iniciarVerificacao(idPagamento) {
+        // Limpa timer anterior se houver
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+
+        intervaloVerificacao = setInterval(async () => {
+          try {
+            const res = await fetch(
+              `${API_URL}/pagamento/status/${idPagamento}`
+            );
+            const dados = await res.json();
+
+            if (dados.status === "approved") {
+              mostrarSucesso();
+            }
+          } catch (erro) {
+            console.error("Erro ao verificar status", erro);
+          }
+        }, 3000); // Verifica a cada 3 segundos
+      }
+
+      function mostrarSucesso() {
+        // Para o timer
+        clearInterval(intervaloVerificacao);
+
+        // Troca as telas
+        document.getElementById("area-qr").style.display = "none";
+        document.getElementById("btn-fechar-qr").style.display = "none";
+        document.getElementById("area-sucesso").style.display = "flex";
+      }
+
       function copiarPix() {
         const texto = document.getElementById("texto-copia");
         texto.select();
-        document.execCommand("copy"); // Ou navigator.clipboard.writeText
+        document.execCommand("copy");
         alert("Código PIX copiado! Pague no app do seu banco.");
       }
 
       function fecharModal() {
-        location.reload(); // Recarrega a página para limpar o form
+        if (intervaloVerificacao) clearInterval(intervaloVerificacao);
+        location.reload();
       }
 
       // --- Banners Carrossel ---

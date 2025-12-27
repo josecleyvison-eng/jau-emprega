@@ -243,6 +243,26 @@ app.post("/admin/banners", async (req, res) => {
   }
 });
 
+// ================= NOVA ROTA: CHECAR STATUS DO PAGAMENTO =================
+app.get("/pagamento/status/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Busca no banco se esse ID de pagamento já está 'approved'
+    const result = await pool.query(
+      "SELECT status_pagamento FROM vagas WHERE id_pagamento = $1",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.json({ status: result.rows[0].status_pagamento });
+    } else {
+      res.json({ status: "not_found" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ================= ROTA WEBHOOK (O Mercado Pago chama isso) =================
 app.post("/webhook", async (req, res) => {
   const { data } = req.body;
