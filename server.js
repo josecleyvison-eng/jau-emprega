@@ -1,9 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const { Pool } = require("pg");
+const { MercadoPagoConfig, Payment } = require("mercadopago");
 require("dotenv").config(); // Recomendado para ler o .env localmente
 
 const app = express();
+
+const client = new MercadoPagoConfig({
+  accessToken: "APP_USR-5738633b-29a6-4f2b-8907-df593b74d5d0",
+});
 
 // --- CONFIGURAÇÕES INICIAIS ---
 // IMPORTANTE: O limite deve vir PRIMEIRO para aceitar as imagens dos banners
@@ -58,21 +63,65 @@ initDB();
 
 // ================= ROTAS PÚBLICAS =================
 
-// 1. Listar Vagas Aprovadas
-// Mantive o seu filtro de 7 dias, mas se quiser mostrar todas as ativas, remova a linha do "AND data_postagem"
-app.get("/vagas", async (req, res) => {
-  try {
-    const { rows } = await pool.query(`
-            SELECT * FROM vagas 
-            WHERE status = 1 
-            ORDER BY data_postagem DESC
-        `);
-    // Nota: Removi o filtro de 7 dias (AND data_postagem >= NOW() - INTERVAL '7 days')
-    // para garantir que suas vagas de teste apareçam. Se quiser o filtro de volta, é só recolocar.
+// ================= ROTA DE CADASTRO COM PIX (COLE ISSO NO LUGAR DA ANTIGA) =================
+app.post("/vagas", async (req, res) => {
+  // 1. Recebe os dados do formulário
+  const { titulo, empresa, descricao, salario, contato, whatsapp, categoria } =
+    req.body;
 
-    res.json(rows);
+  try {
+    // 2. GERA O PIX NO MERCADO PAGO
+    const payment = new Payment(client);
+
+    const paymentData = {
+      transaction_amount: 2.0, // Valor da taxa (R$ 2,00)
+      description: `Vaga: ${titulo} - Jaú Emprega`,
+      payment_method_id: "pix",
+      payer: {
+        email: contato, // O e-mail de quem está anunciando
+      },
+      // MUDAR PRO SEU LINK QUANDO FOR PRO AR NO RENDER:
+      notification_url: "https://jau-emprega-oficial.onrender.com/webhook",
+    };
+
+    const result = await payment.create({ body: paymentData });
+
+    // Pega os dados que o Mercado Pago devolveu
+    const pagamentoId = result.id;
+    const qrCode = result.point_of_interaction.transaction_data.qr_code;
+    const qrCodeBase64 =
+      result.point_of_interaction.transaction_data.qr_code_base64;
+
+    // 3. AQUI ENTRA O CÓDIGO QUE VOCÊ PERGUNTOU 👇👇👇
+    // Salvamos a vaga no banco com status -1 (Aguardando Pagamento)
+    await pool.query(
+      `INSERT INTO vagas 
+      (titulo, empresa, descricao, salario, contato, whatsapp, categoria, status, id_pagamento, status_pagamento) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, -1, $8, 'pending')`,
+      [
+        titulo,
+        empresa,
+        descricao,
+        salario,
+        contato,
+        whatsapp,
+        categoria,
+        pagamentoId,
+      ]
+    );
+    //
+    // 4. Devolve o QR Code para o site mostrar a janelinha
+    res.status(201).json({
+      mensagem: "Vaga criada! Pague o PIX para liberar.",
+      pix: {
+        copia_e_cola: qrCode,
+        imagem_base64: qrCodeBase64,
+        id: pagamentoId,
+      },
+    });
   } catch (err) {
-    res.status(500).send(err.message);
+    console.error(err);
+    res.status(500).send("Erro ao gerar PIX: " + err.message);
   }
 });
 
@@ -198,6 +247,39 @@ app.post("/admin/banners", async (req, res) => {
     console.error(err); // Importante para ver o erro no console do Render
     res.status(500).send(err.message);
   }
+  // ... (imagine que aqui em cima terminaram as rotas de admin) ...
+
+  // ================= ROTA WEBHOOK (O Mercado Pago chama isso) =================
+  app.post("/webhook", async (req, res) => {
+    const { data } = req.body;
+
+    if (data && data.id) {
+      try {
+        // 1. Consulta o pagamento para ver se foi aprovado mesmo
+        const payment = new Payment(client);
+        const pagamento = await payment.get({ id: data.id });
+
+        if (pagamento.status === "approved") {
+          // 2. Se aprovado, muda o status da vaga para 0 (Pendente de Aprovação do Admin)
+          console.log(`💰 Pagamento ${data.id} aprovado! Liberando vaga...`);
+          // Atualiza status para 0 (aparece pro admin) e marca como pago
+          await pool.query(
+            "UPDATE vagas SET status = 0, status_pagamento = 'approved' WHERE id_pagamento = $1",
+            [data.id]
+          );
+        }
+      } catch (error) {
+        console.error("Erro no webhook:", error);
+      }
+    }
+    res.sendStatus(200); // Responde "OK" para o Mercado Pago não ficar tentando de novo
+  });
+
+  // --- INICIAR SERVIDOR ---
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`🔥 Jaú Emprega rodando na porta ${PORT}`);
+  });
 });
 
 // --- INICIAR SERVIDOR ---
