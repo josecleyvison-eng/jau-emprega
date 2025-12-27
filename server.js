@@ -7,7 +7,8 @@ require("dotenv").config(); // Recomendado para ler o .env localmente
 const app = express();
 
 const client = new MercadoPagoConfig({
-  accessToken: "APP_USR-5738633b-29a6-4f2b-8907-df593b74d5d0",
+  accessToken:
+    "APP_USR-4216696359213517-122623-cc45ad4fc64d83ce7aa3d57c2e327ff2-531009263",
 });
 
 // --- CONFIGURAÇÕES INICIAIS ---
