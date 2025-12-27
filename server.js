@@ -25,10 +25,9 @@ const pool = new Pool({
 });
 
 // --- INICIALIZAÇÃO DAS TABELAS (Garante que tudo existe) ---
-// Essa função roda assim que o servidor liga para verificar as tabelas
 const initDB = async () => {
   try {
-    // 1. Tabela de Vagas (Completa com WhatsApp e Categoria)
+    // 1. Tabela de Vagas
     await pool.query(`
             CREATE TABLE IF NOT EXISTS vagas (
                 id SERIAL PRIMARY KEY,
@@ -40,6 +39,8 @@ const initDB = async () => {
                 whatsapp TEXT, 
                 categoria TEXT,
                 status INTEGER DEFAULT 0, -- 0: Pendente, 1: Aprovada
+                id_pagamento BIGINT,
+                status_pagamento TEXT DEFAULT 'pending',
                 data_postagem TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -63,7 +64,20 @@ initDB();
 
 // ================= ROTAS PÚBLICAS =================
 
-// ================= ROTA DE CADASTRO COM PIX (COLE ISSO NO LUGAR DA ANTIGA) =================
+app.get("/vagas", async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+              SELECT * FROM vagas 
+              WHERE status = 1 
+              ORDER BY data_postagem DESC
+          `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// ================= ROTA DE CADASTRO COM PIX =================
 app.post("/vagas", async (req, res) => {
   // 1. Recebe os dados do formulário
   const { titulo, empresa, descricao, salario, contato, whatsapp, categoria } =
@@ -92,8 +106,7 @@ app.post("/vagas", async (req, res) => {
     const qrCodeBase64 =
       result.point_of_interaction.transaction_data.qr_code_base64;
 
-    // 3. AQUI ENTRA O CÓDIGO QUE VOCÊ PERGUNTOU 👇👇👇
-    // Salvamos a vaga no banco com status -1 (Aguardando Pagamento)
+    // 3. Salva no banco com status -1 (Aguardando Pagamento)
     await pool.query(
       `INSERT INTO vagas 
       (titulo, empresa, descricao, salario, contato, whatsapp, categoria, status, id_pagamento, status_pagamento) 
@@ -109,7 +122,7 @@ app.post("/vagas", async (req, res) => {
         pagamentoId,
       ]
     );
-    //
+
     // 4. Devolve o QR Code para o site mostrar a janelinha
     res.status(201).json({
       mensagem: "Vaga criada! Pague o PIX para liberar.",
@@ -122,26 +135,6 @@ app.post("/vagas", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao gerar PIX: " + err.message);
-  }
-});
-
-// 2. CADASTRO DE VAGA (ATUALIZADO COM WHATSAPP)
-app.post("/vagas", async (req, res) => {
-  // Recebe o novo campo 'whatsapp'
-  const { titulo, empresa, descricao, salario, contato, whatsapp, categoria } =
-    req.body;
-
-  try {
-    await pool.query(
-      `INSERT INTO vagas 
-      (titulo, empresa, descricao, salario, contato, whatsapp, categoria, status) 
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 0)`, // Status 0 = Pendente
-      [titulo, empresa, descricao, salario, contato, whatsapp, categoria]
-    );
-    res.status(201).json({ mensagem: "Vaga enviada para análise!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send(err.message);
   }
 });
 
@@ -247,43 +240,36 @@ app.post("/admin/banners", async (req, res) => {
     console.error(err); // Importante para ver o erro no console do Render
     res.status(500).send(err.message);
   }
-  // ... (imagine que aqui em cima terminaram as rotas de admin) ...
+});
 
-  // ================= ROTA WEBHOOK (O Mercado Pago chama isso) =================
-  app.post("/webhook", async (req, res) => {
-    const { data } = req.body;
+// ================= ROTA WEBHOOK (O Mercado Pago chama isso) =================
+app.post("/webhook", async (req, res) => {
+  const { data } = req.body;
 
-    if (data && data.id) {
-      try {
-        // 1. Consulta o pagamento para ver se foi aprovado mesmo
-        const payment = new Payment(client);
-        const pagamento = await payment.get({ id: data.id });
+  if (data && data.id) {
+    try {
+      // 1. Consulta o pagamento para ver se foi aprovado mesmo
+      const payment = new Payment(client);
+      const pagamento = await payment.get({ id: data.id });
 
-        if (pagamento.status === "approved") {
-          // 2. Se aprovado, muda o status da vaga para 0 (Pendente de Aprovação do Admin)
-          console.log(`💰 Pagamento ${data.id} aprovado! Liberando vaga...`);
-          // Atualiza status para 0 (aparece pro admin) e marca como pago
-          await pool.query(
-            "UPDATE vagas SET status = 0, status_pagamento = 'approved' WHERE id_pagamento = $1",
-            [data.id]
-          );
-        }
-      } catch (error) {
-        console.error("Erro no webhook:", error);
+      if (pagamento.status === "approved") {
+        // 2. Se aprovado, muda o status da vaga para 0 (Pendente de Aprovação do Admin)
+        console.log(`💰 Pagamento ${data.id} aprovado! Liberando vaga...`);
+        // Atualiza status para 0 (aparece pro admin) e marca como pago
+        await pool.query(
+          "UPDATE vagas SET status = 0, status_pagamento = 'approved' WHERE id_pagamento = $1",
+          [data.id]
+        );
       }
+    } catch (error) {
+      console.error("Erro no webhook:", error);
     }
-    res.sendStatus(200); // Responde "OK" para o Mercado Pago não ficar tentando de novo
-  });
-
-  // --- INICIAR SERVIDOR ---
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`🔥 Jaú Emprega rodando na porta ${PORT}`);
-  });
+  }
+  res.sendStatus(200); // Responde "OK" para o Mercado Pago não ficar tentando de novo
 });
 
 // --- INICIAR SERVIDOR ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Jaú Emprega (PostgreSQL) rodando na porta ${PORT}`);
+  console.log(`🔥 Jaú Emprega rodando na porta ${PORT}`);
 });

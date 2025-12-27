@@ -308,6 +308,44 @@
       <div id="lista-vagas"></div>
     </div>
 
+    <div id="modal-pix" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="color: #004aad">Quase lá! 🚀</h2>
+        <p>
+          Pague a taxa de <strong>R$ 2,00</strong> para sua vaga ir para
+          aprovação.
+        </p>
+
+        <img id="img-qr" class="qr-img" src="" alt="QR Code Pix" />
+
+        <p style="font-size: 0.9rem; color: #555">
+          Escaneie ou copie o código abaixo:
+        </p>
+
+        <textarea
+          id="texto-copia"
+          style="width: 100%; height: 50px; font-size: 0.8rem; margin-top: 5px"
+        ></textarea>
+
+        <button class="btn-copiar" onclick="copiarPix()">
+          Copiar Código PIX
+        </button>
+        <button
+          onclick="fecharModal()"
+          style="
+            background: transparent;
+            border: none;
+            color: #777;
+            margin-top: 15px;
+            cursor: pointer;
+            text-decoration: underline;
+          "
+        >
+          Fechar
+        </button>
+      </div>
+    </div>
+
     <script>
       const API_URL = "";
       let todasAsVagas = [];
@@ -404,8 +442,14 @@
       }
 
       async function enviarVaga() {
-        // ... (pega os valores dos inputs igual antes) ...
-        // const titulo = ...
+        // Pega valores
+        const titulo = document.getElementById("titulo").value;
+        const empresa = document.getElementById("empresa").value;
+        const salario = document.getElementById("salario").value;
+        const contato = document.getElementById("contato").value;
+        const whatsapp = document.getElementById("whatsapp").value;
+        const descricao = document.getElementById("descricao").value;
+        const categoria = document.getElementById("categoria").value;
 
         if (!titulo || !contato || !categoria)
           return alert("Preencha os campos!");
@@ -495,36 +539,6 @@
 
       carregarBanners();
       carregarVagas();
-      <div id="modal-pix" class="modal-overlay">
-        <div class="modal-content">
-          <h2 style="color: #004aad;">Quase lá! 🚀</h2>
-          <p>
-            Pague a taxa de <strong>R$ 2,00</strong> para sua vaga ir para
-            aprovação.
-          </p>
-
-          <img id="img-qr" class="qr-img" src="" alt="QR Code Pix" />
-
-          <p style="font-size: 0.9rem; color: #555;">
-            Escaneie ou copie o código abaixo:
-          </p>
-
-          <textarea
-            id="texto-copia"
-            style="width:100%; height:50px; font-size:0.8rem; margin-top:5px;"
-          ></textarea>
-
-          <button class="btn-copiar" onclick="copiarPix()">
-            Copiar Código PIX
-          </button>
-          <button
-            onclick="fecharModal()"
-            style="background:transparent; border:none; color:#777; margin-top:15px; cursor:pointer; text-decoration:underline;"
-          >
-            Fechar
-          </button>
-        </div>
-      </div>;
     </script>
   </body>
 </html>
