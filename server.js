@@ -6,8 +6,9 @@ require("dotenv").config(); // Recomendado para ler o .env localmente
 
 const app = express();
 
+// O código vai ler "process.env.MP_ACCESS_TOKEN" que é onde guardamos a chave longa
 const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN, // Chave segura 🔒
+  accessToken: process.env.MP_ACCESS_TOKEN,
 });
 
 // --- CONFIGURAÇÕES INICIAIS ---
@@ -138,6 +139,25 @@ app.post("/vagas", async (req, res) => {
   }
 });
 
+// Rota para polling (front-end verifica se pagou)
+app.get("/pagamento/status/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT status_pagamento FROM vagas WHERE id_pagamento = $1",
+      [id]
+    );
+
+    if (result.rows.length > 0) {
+      res.json({ status: result.rows[0].status_pagamento });
+    } else {
+      res.json({ status: "not_found" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 3. Listar Banners
 app.get("/banners", async (req, res) => {
   try {
@@ -162,9 +182,7 @@ app.post("/login", (req, res) => {
   }
 });
 
-// ... (rota de login está aqui em cima) ...
-
-// NOVO: Rota para calcular o financeiro
+// 1.5 NOVO: Rota para calcular o financeiro
 app.get("/admin/financeiro", async (req, res) => {
   try {
     // Conta quantas vagas têm o pagamento aprovado
@@ -184,8 +202,6 @@ app.get("/admin/financeiro", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
-
-// ... (outras rotas admin continuam abaixo) ...
 
 // 2. Ver Vagas Pendentes
 app.get("/admin/pendentes", async (req, res) => {
@@ -264,26 +280,6 @@ app.post("/admin/banners", async (req, res) => {
   } catch (err) {
     console.error(err); // Importante para ver o erro no console do Render
     res.status(500).send(err.message);
-  }
-});
-
-// ================= NOVA ROTA: CHECAR STATUS DO PAGAMENTO =================
-app.get("/pagamento/status/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    // Busca no banco se esse ID de pagamento já está 'approved'
-    const result = await pool.query(
-      "SELECT status_pagamento FROM vagas WHERE id_pagamento = $1",
-      [id]
-    );
-
-    if (result.rows.length > 0) {
-      res.json({ status: result.rows[0].status_pagamento });
-    } else {
-      res.json({ status: "not_found" });
-    }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
   }
 });
 
