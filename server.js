@@ -7,8 +7,7 @@ require("dotenv").config(); // Recomendado para ler o .env localmente
 const app = express();
 
 const client = new MercadoPagoConfig({
-  accessToken:
-    "APP_USR-4216696359213517-122623-cc45ad4fc64d83ce7aa3d57c2e327ff2-531009263",
+  accessToken: process.env.MP_ACCESS_TOKEN, // Chave segura 🔒
 });
 
 // --- CONFIGURAÇÕES INICIAIS ---
@@ -162,6 +161,31 @@ app.post("/login", (req, res) => {
     res.status(401).json({ sucesso: false, mensagem: "Senha incorreta!" });
   }
 });
+
+// ... (rota de login está aqui em cima) ...
+
+// NOVO: Rota para calcular o financeiro
+app.get("/admin/financeiro", async (req, res) => {
+  try {
+    // Conta quantas vagas têm o pagamento aprovado
+    const result = await pool.query(
+      "SELECT COUNT(*) FROM vagas WHERE status_pagamento = 'approved'"
+    );
+
+    const totalVagas = parseInt(result.rows[0].count);
+    const valorPorVaga = 2.0; // Valor fixo da taxa
+    const totalFaturado = totalVagas * valorPorVaga;
+
+    res.json({
+      vagas: totalVagas,
+      faturado: totalFaturado.toFixed(2), // Retorna formato "10.00"
+    });
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+// ... (outras rotas admin continuam abaixo) ...
 
 // 2. Ver Vagas Pendentes
 app.get("/admin/pendentes", async (req, res) => {

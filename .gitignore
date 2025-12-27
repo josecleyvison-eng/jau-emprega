@@ -1,2 +1,5 @@
 node_modules
 jau-emprega.db
+
+node_modules
+.env
